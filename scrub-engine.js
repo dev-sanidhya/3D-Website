@@ -127,18 +127,27 @@ function mountScrollWorld(container, config) {
   const nav = el('nav', 'sw-nav'); if (config.nav !== false) topbar.appendChild(nav);
   if (config.cta && config.cta.label) {
     const c = el('a', 'sw-topcta'); c.href = config.cta.href || '#'; c.textContent = config.cta.label;
+    // A plain href can't scroll to the right spot — this page drives scroll position
+    // mathematically (see layout()/read()), there's no in-flow element at any #id for
+    // the browser's native anchor jump to land on. Reuse the same jumpTo the route dots
+    // use instead; href stays as a semantic fallback (e.g. no-JS).
+    c.addEventListener('click', e => { e.preventDefault(); jumpTo(N - 1); });
     topbar.appendChild(c);
   }
 
   const stage = el('div', 'sw-stage');
   const copylayer = el('div', 'sw-copylayer');
+  // Text keyed to a specific moment inside a single clip (a wordmark appearing as a door
+  // swings open, a note's handwriting being "replaced" by real buttons at the very end) —
+  // distinct from copylayer's per-section side panel, which fades across the whole scene.
+  const keylayer = el('div', 'sw-keylayer');
   const route = el('div', 'sw-route');
   const hint = el('div', 'sw-hint');
   const hintText = el('span'); hintText.textContent = config.hint || 'scroll'; hint.appendChild(hintText);
   hint.appendChild(el('i'));
   const track = el('div', 'sw-track');
 
-  [sky, scrollbar, topbar, stage, copylayer, route, hint, track].forEach(n => container.appendChild(n));
+  [sky, scrollbar, topbar, stage, copylayer, keylayer, route, hint, track].forEach(n => container.appendChild(n));
 
   // segment scenes
   SEGMENTS.forEach(s => {
@@ -164,6 +173,31 @@ function mountScrollWorld(container, config) {
       (s.cta ? `<div class="sw-copy__cta">${ctaBtns(s.cta)}</div>` : '');
     copylayer.appendChild(c); copies.push(c);
 
+    // Door-swing wordmark: a short-lived reveal keyed to a scroll-progress window
+    // *inside* this section's own clip (see read()'s per-segment loop), not to the
+    // section's overall in/out fade.
+    if (s.doorText) {
+      const dt = el('div', 'sw-doortext'); dt.textContent = s.doorText.text;
+      keylayer.appendChild(dt); s._doorEl = dt;
+    }
+    // The finale's handwritten-note payoff: real, clickable copy positioned to sit
+    // exactly where the video's baked-in handwriting is, so the last frame and the
+    // live page read as one continuous object, not a cut.
+    if (s.noteOverlay) {
+      const title = el('div', 'sw-note__title'); title.textContent = s.noteOverlay.title;
+      keylayer.appendChild(title); s._noteTitleEl = title;
+      if (s.noteOverlay.links && s.noteOverlay.links.length) {
+        const links = el('div', 'sw-note__links');
+        s.noteOverlay.links.forEach((l, li) => {
+          if (li > 0) links.appendChild(document.createTextNode(' · '));
+          const a = el('a'); a.href = l.href; a.textContent = l.label;
+          if (/^https?:/.test(l.href)) { a.target = '_blank'; a.rel = 'noopener'; }
+          links.appendChild(a);
+        });
+        keylayer.appendChild(links); s._noteLinksEl = links;
+      }
+    }
+
     const dot = el('button', 'sw-route__dot'); dot.style.setProperty('--sw-accent', s.accent || '');
     dot.innerHTML = `<span class="sw-route__label">${esc(s.label || '')}</span><i></i>`;
     dot.addEventListener('click', () => jumpTo(i)); route.appendChild(dot); dots.push(dot);
@@ -181,6 +215,17 @@ function mountScrollWorld(container, config) {
   // (where the copy peaks) and moves quicker near the seams. L=0 linear, L=1 full
   // mid-scene pause. f(0)=0, f(1)=1 always, so seam frames are untouched.
   const lingerEase = (x, L) => { L = clamp(L); const c = x - 0.5; return (1 - L) * x + L * (4 * c * c * c + 0.5); };
+  // Fades a keyed-text element in over [from-w, from], holds through [from, to], then
+  // fades out over [to, to+w] — used for text tied to a specific in-clip moment (a door
+  // mid-swing) rather than the whole section's scroll range.
+  const KEY_FADE_W = 0.06;
+  function windowOpacity(x, from, to) {
+    if (x < from - KEY_FADE_W) return 0;
+    if (x < from) return smooth((x - (from - KEY_FADE_W)) / KEY_FADE_W);
+    if (x <= to) return 1;
+    if (x <= to + KEY_FADE_W) return 1 - smooth((x - to) / KEY_FADE_W);
+    return 0;
+  }
   let vh = window.innerHeight, stageX = 0, totalW = 0, activeIndex = -1, ticking = false;
   let laidOutW = window.innerWidth;   // width the current layout was computed at (see onResize)
 
@@ -243,6 +288,24 @@ function mountScrollWorld(container, config) {
       if (!s.hasClip || !s.ready) {
         const sc = reduce ? 1 : 1.03 + local * 0.14;
         s.img.style.transform = `translateX(${stageX - 2}vw) scale(${sc.toFixed(3)})`;
+      }
+      // doorText / noteOverlay are keyed to `s.target` — the section's actual VIDEO
+      // TIME progress (post-linger), not raw scroll fraction — so a moment like "the
+      // door is mid-swing" stays locked to that real frame even when `linger` remaps
+      // scroll speed to dwell longer in the middle of the clip.
+      if (s.kind === 'dive') {
+        const sec = SECTIONS[s.si];
+        if (sec.doorText && sec._doorEl) {
+          sec._doorEl.style.opacity = windowOpacity(s.target, sec.doorText.from, sec.doorText.to);
+        }
+        if (sec.noteOverlay) {
+          const revealed = smooth((s.target - sec.noteOverlay.from) / Math.max(0.001, 1 - sec.noteOverlay.from));
+          if (sec._noteTitleEl) sec._noteTitleEl.style.opacity = revealed;
+          if (sec._noteLinksEl) {
+            sec._noteLinksEl.style.opacity = revealed;
+            sec._noteLinksEl.style.pointerEvents = revealed > 0.6 ? 'auto' : 'none';
+          }
+        }
       }
     }
 
@@ -410,6 +473,19 @@ function injectCSS() {
   .sw-scene__video,.sw-scene__still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 42%;}
   .sw-scene__still{will-change:transform;} .sw-scene.has-clip .sw-scene__still{opacity:0;} .sw-scene__video{z-index:1;}
   .sw-copylayer{position:fixed;inset:0;z-index:20;pointer-events:none;}
+  .sw-keylayer{position:fixed;inset:0;z-index:22;pointer-events:none;}
+  .sw-doortext{position:absolute;left:53%;top:40%;transform:translate(-50%,-50%);opacity:0;white-space:nowrap;
+    font-family:var(--sw-font-display);font-weight:800;font-size:clamp(2rem,5.6vw,4.6rem);letter-spacing:.01em;
+    background:linear-gradient(100deg,var(--sw-accent),#fff 45%,var(--sw-accent));background-size:220% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:sw-shimmer 6s linear infinite;
+    filter:drop-shadow(0 6px 22px rgba(0,0,0,.55));}
+  .sw-note__title{position:absolute;left:53%;top:51%;transform:translate(-50%,-50%);opacity:0;text-align:center;width:min(70vw,640px);
+    font-family:'Caveat',cursive;font-weight:700;font-size:clamp(2.3rem,5.6vw,4.6rem);line-height:1.05;color:#3E2A15;
+    text-shadow:0 2px 10px rgba(255,255,255,.3);}
+  .sw-note__links{position:absolute;left:53%;top:69%;transform:translate(-50%,-50%);opacity:0;text-align:center;
+    font-family:'Caveat',cursive;font-weight:600;font-size:clamp(1.3rem,2.5vw,1.7rem);color:#3E2A15;white-space:nowrap;}
+  .sw-note__links a{color:inherit;text-decoration:none;border-bottom:2px solid color-mix(in srgb,#3E2A15 45%,transparent);padding-bottom:2px;transition:border-color .2s,opacity .2s;}
+  .sw-note__links a:hover{border-color:#3E2A15;opacity:.7;}
   .sw-copylayer::before{content:"";position:absolute;inset:0;width:min(58vw,780px);background:linear-gradient(90deg,var(--sw-bg) 0%,color-mix(in srgb,var(--sw-bg) 82%,transparent) 34%,color-mix(in srgb,var(--sw-bg) 40%,transparent) 62%,transparent 100%);}
   .sw-copy{position:absolute;left:clamp(18px,5vw,64px);top:50%;transform:translateY(-50%);width:min(42vw,460px);opacity:0;will-change:opacity,transform;}
   .sw-copy__num{font-family:ui-monospace,Menlo,monospace;font-size:.74rem;letter-spacing:.12em;color:var(--sw-ink-soft);}
@@ -472,7 +548,8 @@ function injectCSS() {
   }
   @media (prefers-reduced-motion:reduce){ .sw-hint i::after{animation:none;} .sw-pt{display:none;}
     .sw-word,.sw-copy__body,.sw-copy__tags li{transition:none;opacity:1;transform:none;}
-    .sw-copy__eyebrow{animation:none;background-position:0 0;} }
+    .sw-copy__eyebrow{animation:none;background-position:0 0;}
+    .sw-doortext{animation:none;background-position:0 0;} }
   `;
   // Wrap in a cascade layer so the page's own theme tokens (unlayered
   // :root / .sw-root { --sw-bg / --sw-ink / --sw-accent … }) always win over
