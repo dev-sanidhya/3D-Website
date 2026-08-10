@@ -69,17 +69,15 @@
           clip: 'assets/vid/kitchen.mp4',
           accent: '#C9A24B',
           scroll: 1.7, linger: 0.5,
-          // No side-panel copy here on purpose — the payoff is the handwritten note
-          // itself. Real, clickable text is positioned to sit exactly where the
-          // video's baked-in handwriting is: coordinates are fractions of the
-          // 1280x720 source frame, measured directly off the rendered clip's last
-          // frame (title bbox ~x430-930/y330-410px, subtext line ~y475-520px), then
-          // mapped through the same object-fit:cover math the video itself uses.
-          // `from` is deliberately late (holds on the baked note, undisturbed, through
-          // almost the whole settle) so the real version reads as a distinct reveal —
-          // the note "becomes" clickable — rather than a slow continuous dissolve.
+          // Hard handoff, not a crossfade: the video's note reads "Let's design yours."
+          // alone (0.375-0.6875 of this clip), then visibly blows off the counter and is
+          // fully gone by ~0.875, leaving clean marble for the last ~1s as the camera
+          // settles. `from` starts well after that (0.92) so the real version only ever
+          // appears once nothing baked is left on screen — never simultaneously visible,
+          // so there's no ghosting no matter how the two layers compare pixel-for-pixel.
+          // x/y below are chosen to land where the note used to sit, for continuity.
           noteOverlay: {
-            from: 0.90,
+            from: 0.92,
             title: "Let's design yours.",
             titleX: 0.531, titleY: 0.514, titleSrcFontPx: 82,
             linksX: 0.531, linksY: 0.68, linksSrcFontPx: 25,
