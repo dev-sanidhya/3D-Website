@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CH+ Partners — Brilliant design. Simplicity at scale.</title>
+  <meta name="description" content="Scroll to fly through a CH+ Partners home." />
+  <style>
+    :root, .sw-root {
+      --sw-bg: #1C1712;
+      --sw-ink: #F4EFE7;
+      --sw-ink-soft: #C9BEB0;
+      --sw-accent: #B08D57;
+    }
+    html, body { margin: 0; background: #1C1712; }
+  </style>
+</head>
+<body>
+  <div id="top"></div>
+  <div id="world"></div>
+
+  <script src="scrub-engine.js"></script>
+  <script>
+    mountScrollWorld(document.getElementById('world'), {
+      brand: { name: 'CH+ Partners', href: '#top' },
+      cta: { label: 'Book a consultation', href: '#finale' },
+      hint: 'scroll to walk in',
+      diveScroll: 1.3,
+      connScroll: 0.9,
+      sections: [
+        {
+          id: 'entrance', label: 'Arrival',
+          still: 'assets/stills/entrance.png',
+          clip: 'assets/vid/entrance.mp4',
+          accent: '#B08D57',
+          scroll: 1.6, linger: 0.4,
+          eyebrow: 'CH+ Partners',
+          title: 'Brilliant design. Simplicity at scale.',
+          body: 'Step into a home considered down to the last detail.',
+          tags: ['Hyderabad', 'Bespoke residential design'],
+        },
+        {
+          id: 'living', label: 'Living',
+          still: 'assets/stills/living.png',
+          clip: 'assets/vid/living.mp4',
+          accent: '#B08D57',
+          eyebrow: 'The living room',
+          title: 'Space that breathes.',
+          body: 'Every line earns its place.',
+          tags: ['Custom furniture', 'Natural materials'],
+        },
+        {
+          id: 'kitchendine', label: 'Kitchen & Dining',
+          still: 'assets/stills/kitchendine.png',
+          clip: 'assets/vid/kitchendine.mp4',
+          accent: '#A9673F',
+          eyebrow: 'Kitchen & dining',
+          title: 'Function, made beautiful.',
+          body: 'Where the everyday feels considered.',
+          tags: ['Stone & oak', 'Bespoke joinery'],
+        },
+        {
+          id: 'bedroom', label: 'Primary Suite',
+          still: 'assets/stills/bedroom.png',
+          clip: 'assets/vid/bedroom.mp4',
+          accent: '#8B9A82',
+          eyebrow: 'The primary suite',
+          title: 'A quiet return.',
+          body: 'Rest, designed with the same rigor as everything else.',
+          tags: ['Serenity', 'Layered textiles'],
+        },
+        {
+          id: 'atelier', label: 'The Atelier',
+          still: 'assets/stills/atelier.png',
+          clip: 'assets/vid/atelier.mp4',
+          accent: '#A9673F',
+          eyebrow: 'How we work',
+          title: 'Considered, from the first sketch.',
+          body: 'Every material is chosen, never defaulted to.',
+          tags: ['Consultation', 'Material curation'],
+        },
+        {
+          id: 'finale', label: 'The Signature',
+          still: 'assets/stills/finale.png',
+          clip: 'assets/vid/finale.mp4',
+          accent: '#B08D57',
+          scroll: 1.6, linger: 0.45,
+          eyebrow: 'And it all pours into',
+          title: 'One perfect room.',
+          body: "Book a consultation and let's design yours.",
+          tags: [],
+          cta: { primary: { label: 'Book a consultation', href: 'https://chpluspartners.com/' },
+                 secondary: { label: 'See our work', href: 'https://chpluspartners.com/' } },
+        },
+      ],
+      connectors: [],
+    });
+  </script>
+</body>
+</html>
