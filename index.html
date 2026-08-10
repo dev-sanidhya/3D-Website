@@ -3,19 +3,21 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>CH+ Partners — Brilliant design. Simplicity at scale.</title>
-  <meta name="description" content="Scroll to fly through a CH+ Partners home." />
+  <title>ch+partners — Brilliant design. Simplicity at scale.</title>
+  <meta name="description" content="Scroll to fly through a ch+partners home." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root, .sw-root {
-      --sw-bg: #14110D;
-      --sw-ink: #F2EAD8;
-      --sw-ink-soft: #B9AC94;
-      --sw-accent: #C9A24B;
+      --sw-bg: #0A0A0A;
+      --sw-ink: #F5F5F3;
+      --sw-ink-soft: #9A9A96;
+      --sw-accent: #F5F5F3;
+      --sw-font-display: 'Cormorant Garamond', serif;
+      --sw-font-body: 'Cormorant Garamond', serif;
     }
-    html, body { margin: 0; background: #14110D; }
+    html, body { margin: 0; background: #0A0A0A; }
   </style>
 </head>
 <body>
@@ -25,7 +27,7 @@
   <script src="scrub-engine.js"></script>
   <script>
     mountScrollWorld(document.getElementById('world'), {
-      brand: { name: 'CH+ Partners', href: '#top' },
+      brand: { name: 'ch+partners', href: '#top' },
       cta: { label: 'Get in touch', href: '#' },
       hint: 'scroll to walk in',
       diveScroll: 1.3,
@@ -36,7 +38,7 @@
           id: 'entrance', label: 'Arrival',
           still: 'assets/stills/entrance.jpg',
           clip: 'assets/vid/entrance.mp4',
-          accent: '#C9A24B',
+          accent: '#F5F5F3',
           scroll: 1.6, linger: 0.4,
           // The brand mark appears burned into the door itself as it swings open
           // (door cracks ~t=0.8s, fully open ~t=2s of this 8s clip) and dissolves
@@ -47,7 +49,7 @@
           // Now keyed to appear only once the door is fully open (t≈2s/0.25 of this 8s
           // clip), then holds and grows through the hallway push, dissolving well before
           // the seam into the living room.
-          doorText: { text: 'CH+ Partners', from: 0.30, to: 0.70, x: 0.50, y: 0.40, srcFontPx: 100, zoom: 0.28 },
+          doorText: { text: 'ch+partners', from: 0.30, to: 0.70, x: 0.50, y: 0.40, srcFontPx: 100, zoom: 0.28 },
           eyebrow: 'Hyderabad · Bespoke residential design',
           title: 'Brilliant design. Simplicity at scale.',
           body: 'Step into a home considered down to the last detail.',
@@ -57,7 +59,7 @@
           id: 'living', label: 'Living',
           still: 'assets/stills/living.jpg',
           clip: 'assets/vid/living.mp4',
-          accent: '#C9A24B',
+          accent: '#F5F5F3',
           eyebrow: 'The living room',
           title: 'Space that breathes.',
           body: 'Teak, brass and light, arranged with restraint.',
@@ -67,7 +69,7 @@
           id: 'kitchen', label: 'The Kitchen',
           still: 'assets/stills/kitchen.jpg',
           clip: 'assets/vid/kitchen.mp4',
-          accent: '#C9A24B',
+          accent: '#F5F5F3',
           scroll: 1.7, linger: 0.5,
           // Hard handoff, not a crossfade: the video's note reads "Let's design yours."
           // alone (0.375-0.6875 of this clip), then visibly blows off the counter and is
