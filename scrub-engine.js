@@ -534,10 +534,10 @@ function injectCSS() {
     -webkit-background-clip:text;background-clip:text;color:transparent;animation:sw-shimmer 6s linear infinite;
     filter:drop-shadow(0 6px 22px rgba(0,0,0,.55));}
   .sw-note__title{position:absolute;transform:translate(-50%,-50%);opacity:0;text-align:center;white-space:nowrap;
-    font-family:'Mrs Saint Delafield',cursive;font-weight:400;line-height:1.15;color:#111;
+    font-family:'Alex Brush',cursive;font-weight:400;line-height:1.15;color:#111;
     text-shadow:0 2px 10px rgba(255,255,255,.3);}
   .sw-note__links{position:absolute;transform:translate(-50%,-50%);opacity:0;text-align:center;
-    font-family:'Mrs Saint Delafield',cursive;font-weight:400;color:#111;white-space:nowrap;}
+    font-family:'Alex Brush',cursive;font-weight:400;color:#111;white-space:nowrap;}
   .sw-note__links a{color:inherit;text-decoration:none;border-bottom:2px solid color-mix(in srgb,#111 45%,transparent);padding-bottom:2px;transition:border-color .2s,opacity .2s;}
   .sw-note__links a:hover{border-color:#111;opacity:.7;}
   .sw-copylayer::before{content:"";position:absolute;inset:0;width:min(58vw,780px);background:linear-gradient(90deg,var(--sw-bg) 0%,color-mix(in srgb,var(--sw-bg) 82%,transparent) 34%,color-mix(in srgb,var(--sw-bg) 40%,transparent) 62%,transparent 100%);}
