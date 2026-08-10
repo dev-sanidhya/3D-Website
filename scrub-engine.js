@@ -338,6 +338,12 @@ function mountScrollWorld(container, config) {
         const sec = SECTIONS[s.si];
         if (sec.doorText && sec._doorEl) {
           sec._doorEl.style.opacity = windowOpacity(s.target, sec.doorText.from, sec.doorText.to);
+          // Grows slightly across its hold window so it reads as pushing toward camera
+          // with the hallway dolly, instead of sitting static while the scene moves.
+          const span = Math.max(0.001, sec.doorText.to - sec.doorText.from);
+          const prog = clamp((s.target - sec.doorText.from) / span);
+          const zoom = 1 + prog * (sec.doorText.zoom || 0);
+          sec._doorEl.style.transform = `translate(-50%,-50%) scale(${zoom.toFixed(3)})`;
         }
         if (sec.noteOverlay) {
           const revealed = smooth((s.target - sec.noteOverlay.from) / Math.max(0.001, 1 - sec.noteOverlay.from));

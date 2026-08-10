@@ -44,7 +44,10 @@
           // the 1280x720 source frame — mapped through the same object-fit:cover math
           // as the video itself (see srcToScreen in scrub-engine.js), so it stays
           // anchored to the door regardless of viewport aspect ratio.
-          doorText: { text: 'CH+ Partners', from: 0.18, to: 0.38, x: 0.50, y: 0.40, srcFontPx: 100 },
+          // Now keyed to appear only once the door is fully open (t≈2s/0.25 of this 8s
+          // clip), then holds and grows through the hallway push, dissolving well before
+          // the seam into the living room.
+          doorText: { text: 'CH+ Partners', from: 0.30, to: 0.70, x: 0.50, y: 0.40, srcFontPx: 100, zoom: 0.28 },
           eyebrow: 'Hyderabad · Bespoke residential design',
           title: 'Brilliant design. Simplicity at scale.',
           body: 'Step into a home considered down to the last detail.',
