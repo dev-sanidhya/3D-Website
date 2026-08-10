@@ -4,18 +4,18 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ch+partners — Brilliant design. Simplicity at scale.</title>
-  <meta name="description" content="Scroll to fly through a ch+partners home." />
+  <meta name="description" content="A six-year practice in architecture and interiors from Gachibowli, Hyderabad. Scroll to walk through a home." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap" rel="stylesheet" />
   <style>
     :root, .sw-root {
       --sw-bg: #0A0A0A;
       --sw-ink: #F5F5F3;
       --sw-ink-soft: #9A9A96;
       --sw-accent: #F5F5F3;
-      --sw-font-display: 'Cormorant Garamond', serif;
-      --sw-font-body: 'Cormorant Garamond', serif;
+      --sw-font-display: 'Fraunces', serif;
+      --sw-font-body: 'Fraunces', serif;
     }
     html, body { margin: 0; background: #0A0A0A; }
   </style>
@@ -44,15 +44,11 @@
           // (door cracks ~t=0.8s, fully open ~t=2s of this 8s clip) and dissolves
           // before the camera passes through into the hallway. x/y are fractions of
           // the 1280x720 source frame — mapped through the same object-fit:cover math
-          // as the video itself (see srcToScreen in scrub-engine.js), so it stays
-          // anchored to the door regardless of viewport aspect ratio.
-          // Now keyed to appear only once the door is fully open (t≈2s/0.25 of this 8s
-          // clip), then holds and grows through the hallway push, dissolving well before
-          // the seam into the living room.
+          // as the video itself (see srcToScreen in scrub-engine.js).
           doorText: { text: 'ch+partners', from: 0.30, to: 0.70, x: 0.50, y: 0.40, srcFontPx: 100, zoom: 0.28 },
-          eyebrow: 'Hyderabad · Bespoke residential design',
+          eyebrow: 'Est. 2018 — Gachibowli, Hyderabad',
           title: 'Brilliant design. Simplicity at scale.',
-          body: 'Step into a home considered down to the last detail.',
+          body: 'A practice in architecture, engineering and interiors, led by Chandu S R Krishna. Six years spent finding the inevitable solution — the one where nothing more can be removed.',
           tags: ['Jali & brass', 'Makrana marble'],
         },
         {
@@ -60,10 +56,24 @@
           still: 'assets/stills/living.jpg',
           clip: 'assets/vid/living.mp4',
           accent: '#F5F5F3',
-          eyebrow: 'The living room',
-          title: 'Space that breathes.',
-          body: 'Teak, brass and light, arranged with restraint.',
+          eyebrow: 'Inside-out, outside-in',
+          title: 'Continuity, not decoration.',
+          body: 'The jali throws its pattern across the floor by four in the afternoon. The garden is never more than a glance away. Nothing here was placed to be photographed — it was placed to be lived in.',
+          quote: 'Designing a building from both the inside-out and the outside-in creates a sense of continuity and connection to the wider world.',
+          quoteAttribution: 'ch+partners, on process',
           tags: ['Teak joinery', 'Jharokha lighting'],
+        },
+        {
+          id: 'philosophy', label: 'The Practice',
+          // No still, no clip — a deliberate quiet beat between the living room and the
+          // kitchen. The engine handles a section with neither gracefully (loadClip
+          // returns early with no clip; the still <img> just stays empty), so this reads
+          // as a page break in the story: the dark stage on its own, one large quote.
+          accent: '#F5F5F3',
+          scroll: 1.0, linger: 0.25,
+          eyebrow: 'The practice',
+          title: 'By working together, we can create a better future for all.',
+          body: 'Chandu S R Krishna, founder — six years, one studio, Gachibowli.',
         },
         {
           id: 'kitchen', label: 'The Kitchen',
@@ -71,13 +81,14 @@
           clip: 'assets/vid/kitchen.mp4',
           accent: '#F5F5F3',
           scroll: 1.7, linger: 0.5,
+          eyebrow: 'How we work',
+          quote: 'The most elegant and minimal solution to a structural challenge — the inevitable one, where nothing more can be removed.',
+          quoteAttribution: 'ch+partners, on structural engineering',
           // Hard handoff, not a crossfade: the video's note reads "Let's design yours."
           // alone (0.375-0.6875 of this clip), then visibly blows off the counter and is
           // fully gone by ~0.875, leaving clean marble for the last ~1s as the camera
           // settles. `from` starts well after that (0.92) so the real version only ever
-          // appears once nothing baked is left on screen — never simultaneously visible,
-          // so there's no ghosting no matter how the two layers compare pixel-for-pixel.
-          // x/y below are chosen to land where the note used to sit, for continuity.
+          // appears once nothing baked is left on screen.
           noteOverlay: {
             from: 0.92,
             title: "Let's design yours.",

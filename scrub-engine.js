@@ -177,6 +177,8 @@ function mountScrollWorld(container, config) {
       (s.eyebrow ? `<span class="sw-copy__eyebrow">${esc(s.eyebrow)}</span>` : '') +
       (s.title ? `<h2 class="sw-copy__title">${titleWords(s.title)}</h2>` : '') +
       (s.body ? `<p class="sw-copy__body">${esc(s.body)}</p>` : '') +
+      (s.quote ? `<blockquote class="sw-copy__quote"><p>${esc(s.quote)}</p>` +
+        (s.quoteAttribution ? `<cite>${esc(s.quoteAttribution)}</cite>` : '') + `</blockquote>` : '') +
       (s.tags && s.tags.length ? `<ul class="sw-copy__tags">${s.tags.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '') +
       (s.cta ? `<div class="sw-copy__cta">${ctaBtns(s.cta)}</div>` : '');
     copylayer.appendChild(c); copies.push(c);
@@ -361,8 +363,12 @@ function mountScrollWorld(container, config) {
       const pr = clamp((y - seg.start) / (seg.end - seg.start), 0, 1);
       const before = y < seg.start, after = y > seg.end;
       let cop;
+      // A section with its own noteOverlay has a dedicated centered reveal for the real
+      // payoff — its side-panel copy should behave like a normal mid-scene dwell (fade in,
+      // hold, fade out) rather than holding indefinitely, so it doesn't compete with the
+      // note's moment at the very end.
       if (i === 0) cop = after ? 0 : smooth(1 - pr / 0.62);            // greets on landing
-      else if (i === N - 1) cop = before ? 0 : smooth(pr / 0.4);       // holds CTA at the end
+      else if (i === N - 1 && !SECTIONS[i].noteOverlay) cop = before ? 0 : smooth(pr / 0.4); // holds CTA at the end
       else cop = (before || after) ? 0 : smooth(1 - Math.abs(pr - 0.5) / 0.5);
       const c = copies[i];
       c.style.opacity = cop;
@@ -492,8 +498,8 @@ function injectCSS() {
   if (document.getElementById('sw-css')) return;
   const css = `
   .sw-root{--sw-bg:#F5EDE0;--sw-ink:#241d2b;--sw-ink-soft:#6a6072;--sw-accent:#8a7bb5;
-    --sw-font-display:ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,sans-serif;
-    --sw-font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    --sw-font-display:Georgia,"Times New Roman",serif;
+    --sw-font-body:Georgia,"Times New Roman",serif;
     color:var(--sw-ink);font-family:var(--sw-font-body);}
   html,body{margin:0;background:var(--sw-bg,#F5EDE0);overflow-x:hidden;}
   .sw-sky{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:var(--sw-bg);}
@@ -528,31 +534,40 @@ function injectCSS() {
     -webkit-background-clip:text;background-clip:text;color:transparent;animation:sw-shimmer 6s linear infinite;
     filter:drop-shadow(0 6px 22px rgba(0,0,0,.55));}
   .sw-note__title{position:absolute;transform:translate(-50%,-50%);opacity:0;text-align:center;white-space:nowrap;
-    font-family:'Caveat',cursive;font-weight:700;line-height:1.05;color:#111;
+    font-family:'Mrs Saint Delafield',cursive;font-weight:400;line-height:1.15;color:#111;
     text-shadow:0 2px 10px rgba(255,255,255,.3);}
   .sw-note__links{position:absolute;transform:translate(-50%,-50%);opacity:0;text-align:center;
-    font-family:'Caveat',cursive;font-weight:600;color:#111;white-space:nowrap;}
+    font-family:'Mrs Saint Delafield',cursive;font-weight:400;color:#111;white-space:nowrap;}
   .sw-note__links a{color:inherit;text-decoration:none;border-bottom:2px solid color-mix(in srgb,#111 45%,transparent);padding-bottom:2px;transition:border-color .2s,opacity .2s;}
   .sw-note__links a:hover{border-color:#111;opacity:.7;}
   .sw-copylayer::before{content:"";position:absolute;inset:0;width:min(58vw,780px);background:linear-gradient(90deg,var(--sw-bg) 0%,color-mix(in srgb,var(--sw-bg) 82%,transparent) 34%,color-mix(in srgb,var(--sw-bg) 40%,transparent) 62%,transparent 100%);}
   .sw-copy{position:absolute;left:clamp(18px,5vw,64px);top:50%;transform:translateY(-50%);width:min(42vw,460px);opacity:0;will-change:opacity,transform;}
   .sw-copy__num{font-family:ui-monospace,Menlo,monospace;font-size:.74rem;letter-spacing:.12em;color:var(--sw-ink-soft);}
-  .sw-copy__eyebrow{display:inline-block;margin-top:18px;font-family:var(--sw-font-display);font-weight:700;font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;
+  .sw-copy__eyebrow{display:inline-block;margin-top:18px;font-family:var(--sw-font-display);font-weight:600;font-style:italic;font-size:.8rem;
+    letter-spacing:.5em;text-transform:uppercase;text-indent:.5em;
     background:linear-gradient(90deg,var(--sw-accent),color-mix(in srgb,var(--sw-accent) 30%,#fff),var(--sw-accent));background-size:220% 100%;
-    -webkit-background-clip:text;background-clip:text;color:transparent;animation:sw-shimmer 5s linear infinite;}
-  .sw-copy__title{font-family:var(--sw-font-display);font-weight:700;color:var(--sw-ink);font-size:clamp(2rem,4.4vw,3.5rem);line-height:1.03;margin:12px 0 0;letter-spacing:-.01em;overflow:visible;}
-  .sw-word{display:inline-block;opacity:0;transform:translateY(30px) rotate(-5deg) scale(.92);text-shadow:0 2px 20px color-mix(in srgb,var(--sw-bg) 70%,transparent);
-    transition:opacity .55s cubic-bezier(.22,1.6,.36,1),transform .65s cubic-bezier(.22,1.6,.36,1);transition-delay:calc(var(--wi,0) * 70ms);}
-  .sw-copy.is-in .sw-word{opacity:1;transform:none;}
-  .sw-copy__body{margin-top:18px;font-size:clamp(1rem,1.25vw,1.14rem);line-height:1.55;color:color-mix(in srgb,var(--sw-ink) 78%,var(--sw-ink-soft));max-width:40ch;text-shadow:0 1px 12px color-mix(in srgb,var(--sw-bg) 90%,transparent);
-    opacity:0;transform:translateY(14px);transition:opacity .5s ease .22s,transform .5s cubic-bezier(.22,1.4,.4,1) .22s;}
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    transition:letter-spacing .9s cubic-bezier(.16,1,.3,1),text-indent .9s cubic-bezier(.16,1,.3,1);}
+  .sw-copy.is-in .sw-copy__eyebrow{letter-spacing:.16em;text-indent:0;animation:sw-shimmer 5s linear infinite;}
+  .sw-copy__title{font-family:var(--sw-font-display);font-weight:600;color:var(--sw-ink);font-size:clamp(2rem,4.4vw,3.5rem);line-height:1.05;margin:14px 0 0;letter-spacing:-.01em;overflow:visible;}
+  .sw-word{display:inline-block;opacity:0;filter:blur(9px);transform:translateY(24px) scale(1.04);text-shadow:0 2px 20px color-mix(in srgb,var(--sw-bg) 70%,transparent);
+    transition:opacity .7s cubic-bezier(.16,1,.3,1),filter .7s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1);transition-delay:calc(var(--wi,0) * 90ms);}
+  .sw-copy.is-in .sw-word{opacity:1;filter:blur(0);transform:none;}
+  .sw-copy__body{margin-top:20px;font-size:clamp(1rem,1.25vw,1.14rem);line-height:1.6;color:color-mix(in srgb,var(--sw-ink) 78%,var(--sw-ink-soft));max-width:40ch;text-shadow:0 1px 12px color-mix(in srgb,var(--sw-bg) 90%,transparent);
+    opacity:0;transform:translateY(14px);transition:opacity .5s ease .3s,transform .5s cubic-bezier(.22,1.4,.4,1) .3s;}
   .sw-copy.is-in .sw-copy__body{opacity:1;transform:none;}
+  .sw-copy__quote{margin:24px 0 0;padding-left:20px;position:relative;max-width:34ch;opacity:0;transition:opacity .6s ease .45s;}
+  .sw-copy__quote::before{content:'';position:absolute;left:0;top:2px;bottom:2px;width:2px;background:var(--sw-accent);
+    transform:scaleY(0);transform-origin:top;transition:transform .8s cubic-bezier(.16,1,.3,1) .45s;}
+  .sw-copy.is-in .sw-copy__quote{opacity:1;} .sw-copy.is-in .sw-copy__quote::before{transform:scaleY(1);}
+  .sw-copy__quote p{margin:0;font-family:var(--sw-font-display);font-style:italic;font-weight:500;font-size:1.05rem;line-height:1.5;color:var(--sw-ink);}
+  .sw-copy__quote cite{display:block;margin-top:10px;font-style:normal;font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;color:var(--sw-ink-soft);}
   .sw-copy__tags{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 0;padding:0;}
   .sw-copy__tags li{font-size:.82rem;font-weight:600;color:color-mix(in srgb,var(--sw-accent) 70%,#000);padding:7px 14px;border-radius:999px;background:color-mix(in srgb,var(--sw-accent) 14%,#fff);border:1px solid color-mix(in srgb,var(--sw-accent) 30%,transparent);
     opacity:0;transform:translateY(10px) scale(.85);transition:opacity .4s ease,transform .4s cubic-bezier(.3,1.6,.4,1);}
   .sw-copy.is-in .sw-copy__tags li{opacity:1;transform:none;}
-  .sw-copy__tags li:nth-child(1){transition-delay:.32s;} .sw-copy__tags li:nth-child(2){transition-delay:.39s;}
-  .sw-copy__tags li:nth-child(3){transition-delay:.46s;} .sw-copy__tags li:nth-child(4){transition-delay:.53s;}
+  .sw-copy__tags li:nth-child(1){transition-delay:.62s;} .sw-copy__tags li:nth-child(2){transition-delay:.69s;}
+  .sw-copy__tags li:nth-child(3){transition-delay:.76s;} .sw-copy__tags li:nth-child(4){transition-delay:.83s;}
   @keyframes sw-shimmer{0%{background-position:0% 0}100%{background-position:220% 0}}
   .sw-copy__cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px;pointer-events:auto;}
   .sw-btn{text-decoration:none;font-weight:600;font-size:.95rem;padding:13px 24px;border-radius:999px;transition:transform .2s;}
@@ -595,8 +610,8 @@ function injectCSS() {
     .sw-btn{padding:15px 26px;}
   }
   @media (prefers-reduced-motion:reduce){ .sw-hint i::after{animation:none;} .sw-pt{display:none;}
-    .sw-word,.sw-copy__body,.sw-copy__tags li{transition:none;opacity:1;transform:none;}
-    .sw-copy__eyebrow{animation:none;background-position:0 0;}
+    .sw-word,.sw-copy__body,.sw-copy__tags li,.sw-copy__quote,.sw-copy__quote::before{transition:none;opacity:1;transform:none;filter:none;}
+    .sw-copy__eyebrow{transition:none;letter-spacing:.16em;text-indent:0;animation:none;background-position:0 0;}
     .sw-doortext{animation:none;background-position:0 0;} }
   `;
   // Wrap in a cascade layer so the page's own theme tokens (unlayered
