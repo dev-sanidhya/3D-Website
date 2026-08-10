@@ -7,7 +7,7 @@
   <meta name="description" content="Scroll to fly through a CH+ Partners home." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
   <style>
     :root, .sw-root {
       --sw-bg: #14110D;
@@ -40,8 +40,11 @@
           scroll: 1.6, linger: 0.4,
           // The brand mark appears burned into the door itself as it swings open
           // (door cracks ~t=0.8s, fully open ~t=2s of this 8s clip) and dissolves
-          // before the camera passes through into the hallway.
-          doorText: { text: 'CH+ Partners', from: 0.10, to: 0.30 },
+          // before the camera passes through into the hallway. x/y are fractions of
+          // the 1280x720 source frame — mapped through the same object-fit:cover math
+          // as the video itself (see srcToScreen in scrub-engine.js), so it stays
+          // anchored to the door regardless of viewport aspect ratio.
+          doorText: { text: 'CH+ Partners', from: 0.18, to: 0.38, x: 0.50, y: 0.40, srcFontPx: 100 },
           eyebrow: 'Hyderabad · Bespoke residential design',
           title: 'Brilliant design. Simplicity at scale.',
           body: 'Step into a home considered down to the last detail.',
@@ -65,14 +68,18 @@
           scroll: 1.7, linger: 0.5,
           // No side-panel copy here on purpose — the payoff is the handwritten note
           // itself. Real, clickable text is positioned to sit exactly where the
-          // video's baked-in handwriting is (measured against the rendered clip),
-          // so it reads as one continuous object rather than a cut to a "web page."
+          // video's baked-in handwriting is: coordinates are fractions of the
+          // 1280x720 source frame, measured directly off the rendered clip's last
+          // frame (title bbox ~x430-930/y330-410px, subtext line ~y475-520px), then
+          // mapped through the same object-fit:cover math the video itself uses.
           noteOverlay: {
             from: 0.78,
             title: "Let's design yours.",
+            titleX: 0.531, titleY: 0.514, titleSrcFontPx: 82,
+            linksX: 0.531, linksY: 0.68, linksSrcFontPx: 25,
             links: [
-              { label: 'Email us', href: 'mailto:hello@chpluspartners.com' },
-              { label: 'WhatsApp us', href: 'https://wa.me/919908916178' },
+              { label: 'ch+partners@gmail.com', href: 'mailto:ch+partners@gmail.com' },
+              { label: '+91 99089 16178', href: 'https://wa.me/919908916178' },
             ],
           },
         },

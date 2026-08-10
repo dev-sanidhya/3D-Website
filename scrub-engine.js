@@ -82,6 +82,14 @@ function mountScrollWorld(container, config) {
   // worth it for a short film where the total payload is only a few MB — it trades a
   // slightly heavier initial load for zero fetch-stalls while scrubbing.
   const EAGER = !!config.eagerLoad;
+  // Source resolution + object-position of the encoded clips (see .sw-scene__video's
+  // object-position in injectCSS — keep these in sync). doorText/noteOverlay anchors are
+  // given as fractions of THIS source frame, then mapped through the same object-fit:cover
+  // math the browser uses for the video itself (see layout()'s coverScale/coverOffX/Y) —
+  // anything less than that drifts out of alignment with the baked-in video content the
+  // moment the viewport aspect ratio isn't exactly the source's.
+  const SRC_W = config.sourceWidth || 1280, SRC_H = config.sourceHeight || 720;
+  const OBJ_POS = config.objectPosition || [50, 42];
   const N = SECTIONS.length;
   if (!N) return;
 
@@ -228,6 +236,15 @@ function mountScrollWorld(container, config) {
   }
   let vh = window.innerHeight, stageX = 0, totalW = 0, activeIndex = -1, ticking = false;
   let laidOutW = window.innerWidth;   // width the current layout was computed at (see onResize)
+  let coverScale = 1, coverOffX = 0, coverOffY = 0;   // object-fit:cover geometry, see layout()
+
+  // Maps a fraction of the SOURCE frame (0..1, 0..1) to actual on-screen pixels, replicating
+  // the browser's own object-fit:cover + object-position math for SRC_W×SRC_H at OBJ_POS.
+  // Anchoring keyed text through this (instead of flat viewport %) is what keeps it locked
+  // to the baked-in video content across every viewport aspect ratio, not just 16:9.
+  function srcToScreen(sxFrac, syFrac) {
+    return { x: coverOffX + sxFrac * SRC_W * coverScale, y: coverOffY + syFrac * SRC_H * coverScale };
+  }
 
   function layout() {
     vh = window.innerHeight;
@@ -237,6 +254,30 @@ function mountScrollWorld(container, config) {
     SEGMENTS.forEach(s => { s.start = off * vh; off += s.w; s.end = off * vh; });
     totalW = off;
     track.style.height = (totalW * vh + vh) + 'px';   // +1vh so the last flight completes
+
+    const cw = window.innerWidth, ch = window.innerHeight;
+    coverScale = Math.max(cw / SRC_W, ch / SRC_H);
+    coverOffX = (cw - SRC_W * coverScale) * (OBJ_POS[0] / 100);
+    coverOffY = (ch - SRC_H * coverScale) * (OBJ_POS[1] / 100);
+    SECTIONS.forEach(sec => {
+      if (sec.doorText && sec._doorEl) {
+        const p = srcToScreen(sec.doorText.x, sec.doorText.y);
+        sec._doorEl.style.left = p.x + 'px'; sec._doorEl.style.top = p.y + 'px';
+        sec._doorEl.style.fontSize = (sec.doorText.srcFontPx * coverScale) + 'px';
+      }
+      if (sec.noteOverlay) {
+        if (sec._noteTitleEl) {
+          const p = srcToScreen(sec.noteOverlay.titleX, sec.noteOverlay.titleY);
+          sec._noteTitleEl.style.left = p.x + 'px'; sec._noteTitleEl.style.top = p.y + 'px';
+          sec._noteTitleEl.style.fontSize = (sec.noteOverlay.titleSrcFontPx * coverScale) + 'px';
+        }
+        if (sec._noteLinksEl) {
+          const p = srcToScreen(sec.noteOverlay.linksX, sec.noteOverlay.linksY);
+          sec._noteLinksEl.style.left = p.x + 'px'; sec._noteLinksEl.style.top = p.y + 'px';
+          sec._noteLinksEl.style.fontSize = (sec.noteOverlay.linksSrcFontPx * coverScale) + 'px';
+        }
+      }
+    });
     read();
   }
 
@@ -474,16 +515,16 @@ function injectCSS() {
   .sw-scene__still{will-change:transform;} .sw-scene.has-clip .sw-scene__still{opacity:0;} .sw-scene__video{z-index:1;}
   .sw-copylayer{position:fixed;inset:0;z-index:20;pointer-events:none;}
   .sw-keylayer{position:fixed;inset:0;z-index:22;pointer-events:none;}
-  .sw-doortext{position:absolute;left:53%;top:40%;transform:translate(-50%,-50%);opacity:0;white-space:nowrap;
-    font-family:var(--sw-font-display);font-weight:800;font-size:clamp(2rem,5.6vw,4.6rem);letter-spacing:.01em;
+  .sw-doortext{position:absolute;transform:translate(-50%,-50%);opacity:0;white-space:nowrap;
+    font-family:'Playfair Display',serif;font-weight:700;letter-spacing:.02em;
     background:linear-gradient(100deg,var(--sw-accent),#fff 45%,var(--sw-accent));background-size:220% 100%;
     -webkit-background-clip:text;background-clip:text;color:transparent;animation:sw-shimmer 6s linear infinite;
     filter:drop-shadow(0 6px 22px rgba(0,0,0,.55));}
-  .sw-note__title{position:absolute;left:53%;top:51%;transform:translate(-50%,-50%);opacity:0;text-align:center;width:min(70vw,640px);
-    font-family:'Caveat',cursive;font-weight:700;font-size:clamp(2.3rem,5.6vw,4.6rem);line-height:1.05;color:#3E2A15;
+  .sw-note__title{position:absolute;transform:translate(-50%,-50%);opacity:0;text-align:center;white-space:nowrap;
+    font-family:'Caveat',cursive;font-weight:700;line-height:1.05;color:#3E2A15;
     text-shadow:0 2px 10px rgba(255,255,255,.3);}
-  .sw-note__links{position:absolute;left:53%;top:69%;transform:translate(-50%,-50%);opacity:0;text-align:center;
-    font-family:'Caveat',cursive;font-weight:600;font-size:clamp(1.3rem,2.5vw,1.7rem);color:#3E2A15;white-space:nowrap;}
+  .sw-note__links{position:absolute;transform:translate(-50%,-50%);opacity:0;text-align:center;
+    font-family:'Caveat',cursive;font-weight:600;color:#3E2A15;white-space:nowrap;}
   .sw-note__links a{color:inherit;text-decoration:none;border-bottom:2px solid color-mix(in srgb,#3E2A15 45%,transparent);padding-bottom:2px;transition:border-color .2s,opacity .2s;}
   .sw-note__links a:hover{border-color:#3E2A15;opacity:.7;}
   .sw-copylayer::before{content:"";position:absolute;inset:0;width:min(58vw,780px);background:linear-gradient(90deg,var(--sw-bg) 0%,color-mix(in srgb,var(--sw-bg) 82%,transparent) 34%,color-mix(in srgb,var(--sw-bg) 40%,transparent) 62%,transparent 100%);}
