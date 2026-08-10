@@ -75,8 +75,11 @@
           // 1280x720 source frame, measured directly off the rendered clip's last
           // frame (title bbox ~x430-930/y330-410px, subtext line ~y475-520px), then
           // mapped through the same object-fit:cover math the video itself uses.
+          // `from` is deliberately late (holds on the baked note, undisturbed, through
+          // almost the whole settle) so the real version reads as a distinct reveal —
+          // the note "becomes" clickable — rather than a slow continuous dissolve.
           noteOverlay: {
-            from: 0.78,
+            from: 0.90,
             title: "Let's design yours.",
             titleX: 0.531, titleY: 0.514, titleSrcFontPx: 82,
             linksX: 0.531, linksY: 0.68, linksSrcFontPx: 25,
