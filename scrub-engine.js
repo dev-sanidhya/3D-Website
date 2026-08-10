@@ -77,6 +77,11 @@ function mountScrollWorld(container, config) {
   const DIVE_W = config.diveScroll || 1.3;
   const CONN_W = config.connScroll || 0.9;
   const CROSSFADE = (config.crossfade != null) ? config.crossfade : 0.12;  // seam dissolve width (vh)
+  // Opt-in: fetch every clip immediately at mount instead of waiting until scroll gets
+  // near it. Off by default (a large N-scene chain shouldn't front-load everything), but
+  // worth it for a short film where the total payload is only a few MB — it trades a
+  // slightly heavier initial load for zero fetch-stalls while scrubbing.
+  const EAGER = !!config.eagerLoad;
   const N = SECTIONS.length;
   if (!N) return;
 
@@ -153,7 +158,7 @@ function mountScrollWorld(container, config) {
     c.innerHTML =
       `<span class="sw-copy__num">${pad(i + 1)} / ${pad(N)}</span>` +
       (s.eyebrow ? `<span class="sw-copy__eyebrow">${esc(s.eyebrow)}</span>` : '') +
-      (s.title ? `<h2 class="sw-copy__title">${esc(s.title)}</h2>` : '') +
+      (s.title ? `<h2 class="sw-copy__title">${titleWords(s.title)}</h2>` : '') +
       (s.body ? `<p class="sw-copy__body">${esc(s.body)}</p>` : '') +
       (s.tags && s.tags.length ? `<ul class="sw-copy__tags">${s.tags.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '') +
       (s.cta ? `<div class="sw-copy__cta">${ctaBtns(s.cta)}</div>` : '');
@@ -263,6 +268,9 @@ function mountScrollWorld(container, config) {
       dots.forEach((d, k) => d.classList.toggle('is-active', k === near));
       nav.querySelectorAll('.sw-nav__item').forEach((n, k) => n.classList.toggle('is-active', k === near));
       container.style.setProperty('--sw-accent', SECTIONS[near].accent || '');
+      // Re-triggers the word-cascade / tag pop-in every time a scene becomes the
+      // dominant one — including scrolling back up — not just once on first arrival.
+      copies.forEach((c, k) => c.classList.toggle('is-in', k === near));
     }
     scrollbarFill.style.transform = `scaleX(${clamp(y / (totalW * vh))})`;
     hint.style.opacity = clamp(1 - y / (0.5 * vh));
@@ -270,8 +278,16 @@ function mountScrollWorld(container, config) {
     ticking = false;
   }
 
-  function raf() {
+  // Seeking a <video> is far more expensive than a plain style write (decoder has to
+  // resolve from the nearest keyframe). Writing currentTime on every rAF tick — up to
+  // 120Hz on a high-refresh monitor — is what actually caused the lag; the lerp toward
+  // `target` still runs every frame (cheap), but the seek itself is throttled to a
+  // cadence the eye can't tell apart from 60Hz, roughly halving decode work.
+  let lastSeekTs = 0;
+  function raf(ts) {
     const eps = isMobile() ? 0.02 : 0.008;   // coarser seek step on phones = fewer decodes
+    const seekIntervalMs = isMobile() ? 33 : 22;  // ~30fps mobile / ~45fps desktop seek cadence
+    const canSeek = !lastSeekTs || (ts - lastSeekTs) >= seekIntervalMs;
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
       if (!s.hasClip || !s.ready || !s.video) continue;
@@ -281,10 +297,12 @@ function mountScrollWorld(container, config) {
       if (s.video.seeking) continue;
       if (!s.visible && Math.abs(s.cur - s.target) < 0.002) continue;
       s.cur += (s.target - s.cur) * (reduce ? 1 : 0.18);
+      if (!canSeek) continue;
       const dur = s.video.duration || 1;
       const t = clamp(s.cur, 0, 0.999) * dur;
       if (Math.abs(s.video.currentTime - t) > eps) { try { s.video.currentTime = t; } catch (e) {} }
     }
+    if (canSeek) lastSeekTs = ts;
     requestAnimationFrame(raf);
   }
 
@@ -322,12 +340,19 @@ function mountScrollWorld(container, config) {
   window.addEventListener('orientationchange', layout);
   window.addEventListener('load', layout);
   layout();
+  if (EAGER && !reduce) SEGMENTS.forEach(loadClip);
   requestAnimationFrame(raf);
 
   // ---- helpers ----
   function el(tag, cls) { const n = document.createElement(tag); if (cls) n.className = cls; return n; }
   function pad(n) { return String(n).padStart(2, '0'); }
   function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+  // Wraps each word in its own span carrying a --wi index, so CSS can stagger the
+  // entrance transition-delay per word (see .sw-word in injectCSS) for a cascading,
+  // kinetic-typography reveal instead of the whole title fading in as one block.
+  function titleWords(title) {
+    return esc(title).split(' ').map((w, i) => `<span class="sw-word" style="--wi:${i}">${w}</span>`).join(' ');
+  }
   function ctaBtns(cta) {
     let h = '';
     if (cta.primary) h += `<a class="sw-btn sw-btn--primary" href="${esc(cta.primary.href || '#')}">${esc(cta.primary.label)}</a>`;
@@ -388,11 +413,23 @@ function injectCSS() {
   .sw-copylayer::before{content:"";position:absolute;inset:0;width:min(58vw,780px);background:linear-gradient(90deg,var(--sw-bg) 0%,color-mix(in srgb,var(--sw-bg) 82%,transparent) 34%,color-mix(in srgb,var(--sw-bg) 40%,transparent) 62%,transparent 100%);}
   .sw-copy{position:absolute;left:clamp(18px,5vw,64px);top:50%;transform:translateY(-50%);width:min(42vw,460px);opacity:0;will-change:opacity,transform;}
   .sw-copy__num{font-family:ui-monospace,Menlo,monospace;font-size:.74rem;letter-spacing:.12em;color:var(--sw-ink-soft);}
-  .sw-copy__eyebrow{display:block;margin-top:18px;font-family:var(--sw-font-display);font-weight:700;font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sw-accent);}
-  .sw-copy__title{font-family:var(--sw-font-display);font-weight:700;color:var(--sw-ink);font-size:clamp(2rem,4.4vw,3.5rem);line-height:1.03;margin:12px 0 0;letter-spacing:-.01em;text-shadow:0 2px 20px color-mix(in srgb,var(--sw-bg) 70%,transparent);}
-  .sw-copy__body{margin-top:18px;font-size:clamp(1rem,1.25vw,1.14rem);line-height:1.55;color:color-mix(in srgb,var(--sw-ink) 78%,var(--sw-ink-soft));max-width:40ch;text-shadow:0 1px 12px color-mix(in srgb,var(--sw-bg) 90%,transparent);}
+  .sw-copy__eyebrow{display:inline-block;margin-top:18px;font-family:var(--sw-font-display);font-weight:700;font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;
+    background:linear-gradient(90deg,var(--sw-accent),color-mix(in srgb,var(--sw-accent) 30%,#fff),var(--sw-accent));background-size:220% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:sw-shimmer 5s linear infinite;}
+  .sw-copy__title{font-family:var(--sw-font-display);font-weight:700;color:var(--sw-ink);font-size:clamp(2rem,4.4vw,3.5rem);line-height:1.03;margin:12px 0 0;letter-spacing:-.01em;overflow:visible;}
+  .sw-word{display:inline-block;opacity:0;transform:translateY(30px) rotate(-5deg) scale(.92);text-shadow:0 2px 20px color-mix(in srgb,var(--sw-bg) 70%,transparent);
+    transition:opacity .55s cubic-bezier(.22,1.6,.36,1),transform .65s cubic-bezier(.22,1.6,.36,1);transition-delay:calc(var(--wi,0) * 70ms);}
+  .sw-copy.is-in .sw-word{opacity:1;transform:none;}
+  .sw-copy__body{margin-top:18px;font-size:clamp(1rem,1.25vw,1.14rem);line-height:1.55;color:color-mix(in srgb,var(--sw-ink) 78%,var(--sw-ink-soft));max-width:40ch;text-shadow:0 1px 12px color-mix(in srgb,var(--sw-bg) 90%,transparent);
+    opacity:0;transform:translateY(14px);transition:opacity .5s ease .22s,transform .5s cubic-bezier(.22,1.4,.4,1) .22s;}
+  .sw-copy.is-in .sw-copy__body{opacity:1;transform:none;}
   .sw-copy__tags{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 0;padding:0;}
-  .sw-copy__tags li{font-size:.82rem;font-weight:600;color:color-mix(in srgb,var(--sw-accent) 70%,#000);padding:7px 14px;border-radius:999px;background:color-mix(in srgb,var(--sw-accent) 14%,#fff);border:1px solid color-mix(in srgb,var(--sw-accent) 30%,transparent);}
+  .sw-copy__tags li{font-size:.82rem;font-weight:600;color:color-mix(in srgb,var(--sw-accent) 70%,#000);padding:7px 14px;border-radius:999px;background:color-mix(in srgb,var(--sw-accent) 14%,#fff);border:1px solid color-mix(in srgb,var(--sw-accent) 30%,transparent);
+    opacity:0;transform:translateY(10px) scale(.85);transition:opacity .4s ease,transform .4s cubic-bezier(.3,1.6,.4,1);}
+  .sw-copy.is-in .sw-copy__tags li{opacity:1;transform:none;}
+  .sw-copy__tags li:nth-child(1){transition-delay:.32s;} .sw-copy__tags li:nth-child(2){transition-delay:.39s;}
+  .sw-copy__tags li:nth-child(3){transition-delay:.46s;} .sw-copy__tags li:nth-child(4){transition-delay:.53s;}
+  @keyframes sw-shimmer{0%{background-position:0% 0}100%{background-position:220% 0}}
   .sw-copy__cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px;pointer-events:auto;}
   .sw-btn{text-decoration:none;font-weight:600;font-size:.95rem;padding:13px 24px;border-radius:999px;transition:transform .2s;}
   .sw-btn--primary{color:#fff;background:var(--sw-ink);} .sw-btn--primary:hover{transform:translateY(-2px);}
@@ -433,7 +470,9 @@ function injectCSS() {
     .sw-route__dot{width:28px;height:28px;}
     .sw-btn{padding:15px 26px;}
   }
-  @media (prefers-reduced-motion:reduce){ .sw-hint i::after{animation:none;} .sw-pt{display:none;} }
+  @media (prefers-reduced-motion:reduce){ .sw-hint i::after{animation:none;} .sw-pt{display:none;}
+    .sw-word,.sw-copy__body,.sw-copy__tags li{transition:none;opacity:1;transform:none;}
+    .sw-copy__eyebrow{animation:none;background-position:0 0;} }
   `;
   // Wrap in a cascade layer so the page's own theme tokens (unlayered
   // :root / .sw-root { --sw-bg / --sw-ink / --sw-accent … }) always win over
