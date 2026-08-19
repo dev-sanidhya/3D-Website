@@ -39,7 +39,7 @@ a { color: inherit; }
 /* ---- top nav (shared across all pages) ---- */
 .topbar {
   position: sticky; top: 0; z-index: 50;
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: clamp(14px, 2.4vw, 26px) clamp(18px, 5vw, 64px);
   background: color-mix(in srgb, var(--bg) 78%, transparent);
   backdrop-filter: blur(14px);
@@ -66,7 +66,17 @@ a { color: inherit; }
   padding: 10px 20px; border-radius: 999px; white-space: nowrap; transition: transform .2s;
 }
 .topcta:hover { transform: translateY(-2px); }
-@media (max-width: 760px) { .nav { display: none; } }
+/* Mobile: the pill nav stays reachable (never fully hidden — a nav that vanishes with
+   no fallback is a dead end, not a design choice) as a horizontally-scrollable strip,
+   shrunk enough to coexist with the brand mark and CTA. */
+@media (max-width: 760px) {
+  .topbar { gap: 8px; }
+  .brand__name { display: none; }
+  .nav { max-width: 46vw; overflow-x: auto; scrollbar-width: none; gap: 2px; padding: 4px; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a { padding: 7px 11px; font-size: .78rem; white-space: nowrap; }
+  .topcta { padding: 9px 14px; font-size: .8rem; }
+}
 
 /* ---- kinetic reveal system (mirrors scrub-engine.js's word/eyebrow/quote/tag motifs) ---- */
 .eyebrow {

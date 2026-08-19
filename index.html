@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ch+partners — Brilliant design. Simplicity at scale.</title>
   <meta name="description" content="A six-year practice in architecture and interiors from Gachibowli, Hyderabad. Scroll to walk through a home." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230A0A0A'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='22' font-weight='700' fill='%23F5F5F3' text-anchor='middle'%3E+%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap" rel="stylesheet" />
@@ -31,18 +32,41 @@
     .page-nav a:hover { color: var(--sw-ink); background: color-mix(in srgb, var(--sw-ink) 10%, transparent); }
     @media (max-width: 900px) { .page-nav { display: none; } }
 
-    /* Homepage content below the cinematic — where the visit actually "lands" once the
+    /* The fancy "menu" landing that follows the cinematic — a full-screen destination
+       index. Hovering a row cross-fades a background photo behind the whole section via
+       :has(), no JS required. This is where the visit actually "lands" once the
        walkthrough ends, before it hands off to the rest of the site. */
-    .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(16px, 3vw, 28px); margin-top: 48px; }
-    .card { text-decoration: none; color: inherit; display: block; }
-    .card__img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 8px; transition: transform .5s cubic-bezier(.22,1,.3,1); }
-    .card:hover .card__img { transform: scale(1.03); }
-    .card { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s cubic-bezier(.22,1.4,.4,1); }
-    .card.is-in { opacity: 1; transform: none; }
-    .card-grid .card:nth-child(2) { transition-delay: .1s; } .card-grid .card:nth-child(3) { transition-delay: .2s; }
-    .card__eyebrow { display: block; margin-top: 18px; font-size: .74rem; letter-spacing: .14em; text-transform: uppercase; color: var(--sw-ink-soft); }
-    .card__title { font-family: 'Fraunces', serif; font-weight: 500; font-size: 1.4rem; margin-top: 6px; }
-    @media (max-width: 780px) { .card-grid { grid-template-columns: 1fr; } }
+    .menu { position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; }
+    .menu-bg { position: absolute; inset: 0; z-index: 0; }
+    .menu-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, #0A0A0A 0%, color-mix(in srgb, #0A0A0A 78%, transparent) 45%, color-mix(in srgb, #0A0A0A 55%, transparent) 100%); }
+    .menu-bg__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .8s ease; }
+    .menu-bg__img.is-default { opacity: .5; }
+    .menu:has(.menu-item[data-target="about"]:hover) .menu-bg__img.is-default,
+    .menu:has(.menu-item[data-target="services"]:hover) .menu-bg__img.is-default,
+    .menu:has(.menu-item[data-target="projects"]:hover) .menu-bg__img.is-default,
+    .menu:has(.menu-item[data-target="contact"]:hover) .menu-bg__img.is-default { opacity: 0; }
+    .menu:has(.menu-item[data-target="about"]:hover) .menu-bg__img[data-for="about"],
+    .menu:has(.menu-item[data-target="services"]:hover) .menu-bg__img[data-for="services"],
+    .menu:has(.menu-item[data-target="projects"]:hover) .menu-bg__img[data-for="projects"],
+    .menu:has(.menu-item[data-target="contact"]:hover) .menu-bg__img[data-for="contact"] { opacity: .68; }
+    .menu-fg { position: relative; z-index: 1; width: 100%; padding: clamp(64px, 10vh, 120px) 0; }
+    .menu-list { margin-top: 44px; border-top: 1px solid color-mix(in srgb, var(--sw-ink) 16%, transparent); }
+    .menu-item {
+      display: flex; align-items: baseline; gap: clamp(16px, 4vw, 40px); text-decoration: none; color: var(--sw-ink);
+      padding: clamp(18px, 3.4vh, 32px) 4px; border-bottom: 1px solid color-mix(in srgb, var(--sw-ink) 16%, transparent);
+      transition: padding-left .35s cubic-bezier(.16,1,.3,1);
+    }
+    .menu-item:hover { padding-left: 18px; }
+    .menu-item__num { font-family: ui-monospace, Menlo, monospace; font-size: .8rem; color: var(--sw-ink-soft); flex: none; width: 2.4em; }
+    .menu-item__title { font-family: 'Fraunces', serif; font-weight: 500; font-size: clamp(1.8rem, 5vw, 3.4rem); flex: 1 1 auto; letter-spacing: -.01em; }
+    .menu-item__meta { font-size: .85rem; color: var(--sw-ink-soft); flex: none; max-width: 26ch; text-align: right; }
+    .menu-item__arrow { flex: none; font-size: 1.4rem; opacity: 0; transform: translateX(-8px); transition: opacity .3s, transform .3s; }
+    .menu-item:hover .menu-item__arrow { opacity: 1; transform: none; }
+    @media (max-width: 700px) {
+      .menu-item { flex-wrap: wrap; }
+      .menu-item__meta { display: none; }
+      .menu-item__title { font-size: clamp(1.6rem, 8vw, 2.2rem); }
+    }
   </style>
 </head>
 <body>
@@ -50,28 +74,43 @@
   <div id="world"></div>
 
   <main>
-    <section class="page section reveal" style="padding-top:clamp(64px,10vh,120px);">
-      <span class="eyebrow">Welcome home</span>
-      <h2 class="headline headline--lg" data-words>You've seen the walkthrough. Here's the studio behind it.</h2>
-      <p class="lede">Three rooms and one continuous flight only tell part of the story — the rest is six years
-        of process, twelve finished homes, and a founder who still answers the phone himself.</p>
-
-      <div class="card-grid">
-        <a class="card reveal" href="about.html">
-          <img class="card__img" src="assets/stills/entrance-open.jpg" alt="The entrance, doors open, golden hour" />
-          <span class="card__eyebrow">Meet CH</span>
-          <span class="card__title">Six years, one studio</span>
-        </a>
-        <a class="card reveal" href="services.html">
-          <img class="card__img" src="assets/stills/living-wide.jpg" alt="Living room seen through the marble archway" />
-          <span class="card__eyebrow">What we do</span>
-          <span class="card__title">Four disciplines</span>
-        </a>
-        <a class="card reveal" href="projects.html">
-          <img class="card__img" src="assets/stills/kitchen-note.jpg" alt="Kitchen island with a handwritten note" />
-          <span class="card__eyebrow">Selected work</span>
-          <span class="card__title">Twelve homes, one studio</span>
-        </a>
+    <section class="menu">
+      <div class="menu-bg" aria-hidden="true">
+        <img class="menu-bg__img is-default" src="assets/stills/entrance-open.jpg" alt="" />
+        <img class="menu-bg__img" data-for="about" src="assets/stills/entrance-hallway.jpg" alt="" />
+        <img class="menu-bg__img" data-for="services" src="assets/stills/living-detail.jpg" alt="" />
+        <img class="menu-bg__img" data-for="projects" src="assets/stills/kitchen-note.jpg" alt="" />
+        <img class="menu-bg__img" data-for="contact" src="assets/stills/living-wide.jpg" alt="" />
+      </div>
+      <div class="menu-fg page reveal">
+        <span class="eyebrow">You've seen the walkthrough</span>
+        <h2 class="headline headline--lg" data-words>Where to next?</h2>
+        <nav class="menu-list" aria-label="Explore the studio">
+          <a class="menu-item" href="about.html" data-target="about">
+            <span class="menu-item__num">01</span>
+            <span class="menu-item__title">Meet CH</span>
+            <span class="menu-item__meta">The founder, the studio, est. 2018</span>
+            <span class="menu-item__arrow">→</span>
+          </a>
+          <a class="menu-item" href="services.html" data-target="services">
+            <span class="menu-item__num">02</span>
+            <span class="menu-item__title">What We Do</span>
+            <span class="menu-item__meta">Architecture, engineering, interiors</span>
+            <span class="menu-item__arrow">→</span>
+          </a>
+          <a class="menu-item" href="projects.html" data-target="projects">
+            <span class="menu-item__num">03</span>
+            <span class="menu-item__title">Selected Work</span>
+            <span class="menu-item__meta">Twelve homes across Hyderabad</span>
+            <span class="menu-item__arrow">→</span>
+          </a>
+          <a class="menu-item" href="contact.html" data-target="contact">
+            <span class="menu-item__num">04</span>
+            <span class="menu-item__title">Get In Touch</span>
+            <span class="menu-item__meta">Book a consultation</span>
+            <span class="menu-item__arrow">→</span>
+          </a>
+        </nav>
       </div>
     </section>
 
@@ -80,15 +119,6 @@
         <p>"Finally I got best interior in hyderabad.. don't think more just go for him"</p>
         <cite>ahamad khan</cite>
       </blockquote>
-    </section>
-
-    <section class="page section section--border-top reveal">
-      <span class="eyebrow">Ready when you are</span>
-      <h2 class="headline headline--lg" data-words>Let's design yours.</h2>
-      <div class="btn-row">
-        <a class="btn btn--primary" href="contact.html">Book a consultation</a>
-        <a class="btn btn--ghost" href="projects.html">See the work</a>
-      </div>
     </section>
   </main>
 
