@@ -401,15 +401,20 @@ function mountScrollWorld(container, config) {
     }
     scrollbarFill.style.transform = `scaleX(${clamp(y / (totalW * vh))})`;
     hint.style.opacity = clamp(1 - y / (0.5 * vh));
-    // The route rail is chrome for navigating WITHIN the cinematic — once scrolled past
-    // the last section it has nothing left to point at, and left alone it would float
-    // forever over whatever real page content follows (a menu, a footer, anything).
-    // Fades out over the last 0.3vh of the track, in sync with the final scene's own
-    // crossfade-out, and drops pointer-events once invisible so it can't eat clicks on
-    // the content underneath during the fade.
+    // The route rail AND the atmosphere sky (the diagonal gradient + radial glow behind
+    // every scene) are both chrome for the cinematic itself — fixed, full-viewport,
+    // z-indexed above ordinary static content. Left alone past the last section, they'd
+    // paint over whatever real page content follows (a menu, a footer) forever, since
+    // neither ever had fade-out logic. Both fade out over the last 0.3vh of the track,
+    // in sync with the final scene's own crossfade-out; route also drops pointer-events
+    // once invisible so it can't eat clicks on the content underneath during the fade.
     const routeFade = clamp(1 - Math.max(0, y - (totalW * vh - 0.3 * vh)) / (0.3 * vh));
     route.style.opacity = routeFade;
     route.style.pointerEvents = routeFade < 0.05 ? 'none' : '';
+    sky.style.opacity = routeFade;
+    // copylayer's ::before is the fixed dark scrim panel behind the side copy (for
+    // legibility over video) — same fixed/unfaded-forever issue as sky/route.
+    copylayer.style.opacity = routeFade;
     if (particles) particles.style.transform = `translate3d(0, ${-y * 0.05}px, 0)`;
     ticking = false;
   }
