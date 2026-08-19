@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="site.css" />
   <style>
     :root, .sw-root {
       --sw-bg: #0A0A0A;
@@ -18,14 +19,59 @@
       --sw-font-body: 'Fraunces', serif;
     }
     html, body { margin: 0; background: #0A0A0A; }
+    /* Small site-page nav, inserted into the engine's fixed topbar after mount (see
+       script below) — sits between the brand mark and the section-jump pills so the
+       cinematic page still links to the rest of the site. */
+    .page-nav { display: flex; gap: 2px; }
+    .page-nav a {
+      font-family: 'Fraunces', serif; font-size: .82rem; text-decoration: none;
+      color: color-mix(in srgb, var(--sw-ink) 65%, transparent); padding: 6px 12px;
+      border-radius: 999px; transition: color .2s, background .2s;
+    }
+    .page-nav a:hover { color: var(--sw-ink); background: color-mix(in srgb, var(--sw-ink) 10%, transparent); }
+    @media (max-width: 900px) { .page-nav { display: none; } }
   </style>
 </head>
 <body>
   <div id="top"></div>
   <div id="world"></div>
 
+  <footer class="footer">
+    <div class="page">
+      <div class="footer__grid">
+        <div>
+          <div class="footer__label">ch+partners</div>
+          <p class="lede" style="margin-top:0;max-width:36ch;">Architecture, engineering and interiors, from
+            Gachibowli — est. 2018.</p>
+        </div>
+        <div>
+          <div class="footer__label">Site</div>
+          <ul class="footer__links">
+            <li><a href="about.html">About</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="projects.html">Projects</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer__label">Contact</div>
+          <ul class="footer__links">
+            <li><a href="mailto:chpluspartners@gmail.com">chpluspartners@gmail.com</a></li>
+            <li><a href="https://wa.me/919908916178">+91 99089 16178</a></li>
+            <li>8th floor, SLN Terminus, Jayabheri Enclave, Gachibowli, Hyderabad</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>© <span id="year"></span> ch+partners</span>
+        <span>Gachibowli, Hyderabad, Telangana 500032</span>
+      </div>
+    </div>
+  </footer>
+
   <script src="scrub-engine.js"></script>
   <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
     mountScrollWorld(document.getElementById('world'), {
       brand: { name: 'ch+partners', href: '#top' },
       cta: { label: 'Get in touch', href: '#' },
@@ -83,7 +129,7 @@
             titleX: 0.531, titleY: 0.514, titleSrcFontPx: 82,
             linksX: 0.531, linksY: 0.68, linksSrcFontPx: 34,
             links: [
-              { label: 'ch+partners@gmail.com', href: 'mailto:ch+partners@gmail.com' },
+              { label: 'chpluspartners@gmail.com', href: 'mailto:chpluspartners@gmail.com' },
               { label: '+91 99089 16178', href: 'https://wa.me/919908916178' },
             ],
           },
@@ -91,6 +137,24 @@
       ],
       connectors: [],
     });
+
+    // Insert real site navigation into the engine's topbar, between the brand mark and
+    // the section-jump pills — mountScrollWorld only knows about this page's own scroll
+    // sections, not the rest of the site, so this is wired in separately rather than
+    // touching scrub-engine.js (which stays a page-agnostic, reusable engine).
+    (function () {
+      const topbar = document.querySelector('.sw-topbar');
+      const sectionNav = document.querySelector('.sw-nav');
+      if (!topbar || !sectionNav) return;
+      const pageNav = document.createElement('nav');
+      pageNav.className = 'page-nav';
+      pageNav.innerHTML =
+        '<a href="about.html">About</a>' +
+        '<a href="services.html">Services</a>' +
+        '<a href="projects.html">Projects</a>' +
+        '<a href="contact.html">Contact</a>';
+      topbar.insertBefore(pageNav, sectionNav);
+    })();
   </script>
 </body>
 </html>
