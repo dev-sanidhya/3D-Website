@@ -349,10 +349,18 @@ function mountScrollWorld(container, config) {
         }
         if (sec.noteOverlay) {
           const revealed = smooth((s.target - sec.noteOverlay.from) / Math.max(0.001, 1 - sec.noteOverlay.from));
-          if (sec._noteTitleEl) sec._noteTitleEl.style.opacity = revealed;
+          // s.target saturates at 1 and stays there once scrolled past this section (that's
+          // what makes the reveal hold through the settle) — but with real content
+          // following on the page now, it must also fade back OUT once you scroll past the
+          // section itself, or it sits ghosted over whatever comes next forever. Mirrors
+          // the route rail's own past-the-end fade.
+          const pastEnd = Math.max(0, y - s.end);
+          const fadeOut = 1 - smooth(pastEnd / (0.3 * vh));
+          const op = revealed * fadeOut;
+          if (sec._noteTitleEl) sec._noteTitleEl.style.opacity = op;
           if (sec._noteLinksEl) {
-            sec._noteLinksEl.style.opacity = revealed;
-            sec._noteLinksEl.style.pointerEvents = revealed > 0.6 ? 'auto' : 'none';
+            sec._noteLinksEl.style.opacity = op;
+            sec._noteLinksEl.style.pointerEvents = op > 0.6 ? 'auto' : 'none';
           }
         }
       }
