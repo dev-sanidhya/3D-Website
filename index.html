@@ -30,11 +30,67 @@
     }
     .page-nav a:hover { color: var(--sw-ink); background: color-mix(in srgb, var(--sw-ink) 10%, transparent); }
     @media (max-width: 900px) { .page-nav { display: none; } }
+
+    /* Homepage content below the cinematic — where the visit actually "lands" once the
+       walkthrough ends, before it hands off to the rest of the site. */
+    .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(16px, 3vw, 28px); margin-top: 48px; }
+    .card { text-decoration: none; color: inherit; display: block; }
+    .card__img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 8px; transition: transform .5s cubic-bezier(.22,1,.3,1); }
+    .card:hover .card__img { transform: scale(1.03); }
+    .card { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s cubic-bezier(.22,1.4,.4,1); }
+    .card.is-in { opacity: 1; transform: none; }
+    .card-grid .card:nth-child(2) { transition-delay: .1s; } .card-grid .card:nth-child(3) { transition-delay: .2s; }
+    .card__eyebrow { display: block; margin-top: 18px; font-size: .74rem; letter-spacing: .14em; text-transform: uppercase; color: var(--sw-ink-soft); }
+    .card__title { font-family: 'Fraunces', serif; font-weight: 500; font-size: 1.4rem; margin-top: 6px; }
+    @media (max-width: 780px) { .card-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <div id="top"></div>
   <div id="world"></div>
+
+  <main>
+    <section class="page section reveal" style="padding-top:clamp(64px,10vh,120px);">
+      <span class="eyebrow">Welcome home</span>
+      <h2 class="headline headline--lg" data-words>You've seen the walkthrough. Here's the studio behind it.</h2>
+      <p class="lede">Three rooms and one continuous flight only tell part of the story — the rest is six years
+        of process, twelve finished homes, and a founder who still answers the phone himself.</p>
+
+      <div class="card-grid">
+        <a class="card reveal" href="about.html">
+          <img class="card__img" src="assets/stills/entrance-open.jpg" alt="The entrance, doors open, golden hour" />
+          <span class="card__eyebrow">Meet CH</span>
+          <span class="card__title">Six years, one studio</span>
+        </a>
+        <a class="card reveal" href="services.html">
+          <img class="card__img" src="assets/stills/living-wide.jpg" alt="Living room seen through the marble archway" />
+          <span class="card__eyebrow">What we do</span>
+          <span class="card__title">Four disciplines</span>
+        </a>
+        <a class="card reveal" href="projects.html">
+          <img class="card__img" src="assets/stills/kitchen-note.jpg" alt="Kitchen island with a handwritten note" />
+          <span class="card__eyebrow">Selected work</span>
+          <span class="card__title">Twelve homes, one studio</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="page section--tight section--border-top reveal">
+      <blockquote class="quote" style="padding-left:22px;max-width:52ch;">
+        <p>"Finally I got best interior in hyderabad.. don't think more just go for him"</p>
+        <cite>ahamad khan</cite>
+      </blockquote>
+    </section>
+
+    <section class="page section section--border-top reveal">
+      <span class="eyebrow">Ready when you are</span>
+      <h2 class="headline headline--lg" data-words>Let's design yours.</h2>
+      <div class="btn-row">
+        <a class="btn btn--primary" href="contact.html">Book a consultation</a>
+        <a class="btn btn--ghost" href="projects.html">See the work</a>
+      </div>
+    </section>
+  </main>
 
   <footer class="footer">
     <div class="page">
@@ -156,5 +212,6 @@
       topbar.insertBefore(pageNav, sectionNav);
     })();
   </script>
+  <script src="site.js"></script>
 </body>
 </html>
