@@ -38,9 +38,9 @@
        walkthrough ends, before it hands off to the rest of the site. */
     .menu { position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; }
     .menu-bg { position: absolute; inset: 0; z-index: 0; }
-    .menu-bg::after { content: ''; position: absolute; inset: 0; background: #0A0A0A; opacity: .72; }
+    .menu-bg::after { content: ''; position: absolute; inset: 0; background: #0A0A0A; opacity: .86; }
     .menu-bg__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .8s ease; }
-    .menu-bg__img.is-default { opacity: .5; }
+    .menu-bg__img.is-default { opacity: .32; }
     .menu:has(.menu-item[data-target="about"]:hover) .menu-bg__img.is-default,
     .menu:has(.menu-item[data-target="services"]:hover) .menu-bg__img.is-default,
     .menu:has(.menu-item[data-target="projects"]:hover) .menu-bg__img.is-default,
@@ -48,8 +48,11 @@
     .menu:has(.menu-item[data-target="about"]:hover) .menu-bg__img[data-for="about"],
     .menu:has(.menu-item[data-target="services"]:hover) .menu-bg__img[data-for="services"],
     .menu:has(.menu-item[data-target="projects"]:hover) .menu-bg__img[data-for="projects"],
-    .menu:has(.menu-item[data-target="contact"]:hover) .menu-bg__img[data-for="contact"] { opacity: .68; }
-    .menu-fg { position: relative; z-index: 1; width: 100%; padding: clamp(64px, 10vh, 120px) 0; }
+    .menu:has(.menu-item[data-target="contact"]:hover) .menu-bg__img[data-for="contact"] { opacity: .45; }
+    /* Extra top clearance so the eyebrow/headline never render under the fixed topbar —
+       min-height:100vh + centered content means a tall menu can push its first line up
+       near the viewport top, which is exactly where the topbar always sits. */
+    .menu-fg { position: relative; z-index: 1; width: 100%; padding: clamp(110px, 16vh, 160px) 0 clamp(64px, 10vh, 120px); }
     .menu-list { margin-top: 44px; border-top: 1px solid color-mix(in srgb, var(--sw-ink) 16%, transparent); }
     .menu-item {
       display: flex; align-items: baseline; gap: clamp(16px, 4vw, 40px); text-decoration: none; color: var(--sw-ink);
@@ -204,21 +207,10 @@
           eyebrow: 'How we work',
           quote: 'The most elegant and minimal solution to a structural challenge — the inevitable one, where nothing more can be removed.',
           quoteAttribution: 'ch+partners, on structural engineering',
-          // Hard handoff, not a crossfade: the video's note reads "Let's design yours."
-          // alone (0.375-0.6875 of this clip), then visibly blows off the counter and is
-          // fully gone by ~0.875, leaving clean marble for the last ~1s as the camera
-          // settles. `from` starts well after that (0.92) so the real version only ever
-          // appears once nothing baked is left on screen.
-          noteOverlay: {
-            from: 0.92,
-            title: "Let's design yours.",
-            titleX: 0.531, titleY: 0.514, titleSrcFontPx: 82,
-            linksX: 0.531, linksY: 0.68, linksSrcFontPx: 34,
-            links: [
-              { label: 'chpluspartners@gmail.com', href: 'mailto:chpluspartners@gmail.com' },
-              { label: '+91 99089 16178', href: 'https://wa.me/919908916178' },
-            ],
-          },
+          // The code-driven "Let's design yours." + contact-links handoff is pulled for
+          // now — the reveal timing needs real rework, not a patch. The video's own baked
+          // "Let's design yours." note (visible mid-clip, then blows away) still plays;
+          // this just removes the follow-up crossfade into live contact buttons.
         },
       ],
       connectors: [],

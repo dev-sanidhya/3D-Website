@@ -371,12 +371,15 @@ function mountScrollWorld(container, config) {
       const pr = clamp((y - seg.start) / (seg.end - seg.start), 0, 1);
       const before = y < seg.start, after = y > seg.end;
       let cop;
-      // A section with its own noteOverlay has a dedicated centered reveal for the real
-      // payoff — its side-panel copy should behave like a normal mid-scene dwell (fade in,
-      // hold, fade out) rather than holding indefinitely, so it doesn't compete with the
-      // note's moment at the very end.
+      // Only hold a section's copy open past its own dwell when it actually carries a
+      // reason to (a `cta` button or its own `noteOverlay`) — anything else, including
+      // the last section, fades in/out like a normal mid-scene beat. Without this gate,
+      // any section that happens to be last would hold its copy at full opacity forever
+      // once scrolled past — the same permanent-ghosting bug the route rail and note
+      // overlay both had, just for the side-panel copy instead.
+      const holds = SECTIONS[i].cta || SECTIONS[i].noteOverlay;
       if (i === 0) cop = after ? 0 : smooth(1 - pr / 0.62);            // greets on landing
-      else if (i === N - 1 && !SECTIONS[i].noteOverlay) cop = before ? 0 : smooth(pr / 0.4); // holds CTA at the end
+      else if (i === N - 1 && holds) cop = before ? 0 : smooth(pr / 0.4); // holds CTA at the end
       else cop = (before || after) ? 0 : smooth(1 - Math.abs(pr - 0.5) / 0.5);
       const c = copies[i];
       c.style.opacity = cop;
