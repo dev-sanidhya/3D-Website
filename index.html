@@ -63,7 +63,7 @@
       transition: padding-left .35s cubic-bezier(.16,1,.3,1);
     }
     .menu-item:hover { padding-left: 18px; }
-    .menu-item__num { font-family: var(--sw-font-dot); font-size: .85rem; color: var(--sw-ink-soft); flex: none; width: 3.6em; }
+    .menu-item__num { font-family: var(--sw-font-mono); font-size: .8rem; color: var(--sw-ink-soft); flex: none; white-space: nowrap; }
     .menu-item__num::before { content: '( '; } .menu-item__num::after { content: ' )'; }
     .menu-item__title { font-family: var(--sw-font-display); font-weight: 500; font-size: clamp(1.8rem, 5vw, 3.4rem); flex: 1 1 auto; letter-spacing: -.02em; }
     .menu-item__meta { font-size: .85rem; color: var(--sw-ink-soft); flex: none; max-width: 26ch; text-align: right; }
@@ -111,8 +111,14 @@
             <span class="menu-item__meta">Twelve homes across Hyderabad</span>
             <span class="menu-item__arrow">→</span>
           </a>
-          <a class="menu-item" href="contact.html" data-target="contact">
+          <a class="menu-item" href="testimonials.html" data-target="testimonials">
             <span class="menu-item__num">04</span>
+            <span class="menu-item__title">Testimonials</span>
+            <span class="menu-item__meta">What clients say</span>
+            <span class="menu-item__arrow">→</span>
+          </a>
+          <a class="menu-item" href="contact.html" data-target="contact">
+            <span class="menu-item__num">05</span>
             <span class="menu-item__title">Get In Touch</span>
             <span class="menu-item__meta">Book a consultation</span>
             <span class="menu-item__arrow">→</span>
@@ -143,6 +149,7 @@
             <li><a href="about.html">About</a></li>
             <li><a href="services.html">Services</a></li>
             <li><a href="projects.html">Projects</a></li>
+            <li><a href="testimonials.html">Testimonials</a></li>
             <li><a href="contact.html">Contact</a></li>
           </ul>
         </div>
@@ -158,6 +165,7 @@
       <div class="footer__bottom">
         <span>© <span id="year"></span> ch+partners</span>
         <span>Gachibowli, Hyderabad, Telangana 500032</span>
+        <span><a href="privacy.html" style="color:inherit;">Privacy Policy</a> · <a href="terms.html" style="color:inherit;">Terms and Conditions</a></span>
       </div>
     </div>
   </footer>
@@ -234,6 +242,7 @@
         '<a href="about.html">About</a>' +
         '<a href="services.html">Services</a>' +
         '<a href="projects.html">Projects</a>' +
+        '<a href="testimonials.html">Testimonials</a>' +
         '<a href="contact.html">Contact</a>';
       topbar.insertBefore(pageNav, sectionNav);
     })();

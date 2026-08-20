@@ -570,7 +570,7 @@ function injectCSS() {
   .sw-note__links a:hover{border-color:#111;opacity:.7;}
   .sw-copylayer::before{content:"";position:absolute;inset:0;width:min(58vw,780px);background:linear-gradient(90deg,var(--sw-bg) 0%,color-mix(in srgb,var(--sw-bg) 82%,transparent) 34%,color-mix(in srgb,var(--sw-bg) 40%,transparent) 62%,transparent 100%);}
   .sw-copy{position:absolute;left:clamp(18px,5vw,64px);top:50%;transform:translateY(-50%);width:min(42vw,460px);opacity:0;will-change:opacity,transform;}
-  .sw-copy__num{font-family:var(--sw-font-dot,ui-monospace,Menlo,monospace);font-size:.8rem;letter-spacing:.06em;color:var(--sw-ink-soft);}
+  .sw-copy__num{display:inline-block;margin-right:14px;font-family:var(--sw-font-mono,ui-monospace,Menlo,monospace);font-size:.76rem;letter-spacing:.08em;color:var(--sw-ink-soft);white-space:nowrap;text-shadow:0 1px 8px color-mix(in srgb,var(--sw-bg) 70%,transparent);}
   .sw-copy__num::before{content:'( ';} .sw-copy__num::after{content:' )';}
   .sw-copy__eyebrow{display:inline-block;margin-top:18px;font-family:var(--sw-font-mono,ui-monospace,Menlo,monospace);font-weight:500;font-style:normal;font-size:.76rem;
     letter-spacing:.5em;text-transform:uppercase;text-indent:.5em;color:var(--sw-ink-soft);

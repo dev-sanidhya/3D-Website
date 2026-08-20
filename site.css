@@ -145,7 +145,7 @@ a { color: inherit; }
 }
 .index-row.is-in { opacity: 1; transform: none; }
 .index-list .index-row:last-child { border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); }
-.index-row__num { font-family: var(--font-dot); font-size: .85rem; color: var(--ink-soft); flex: none; width: 3.4em; }
+.index-row__num { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-soft); flex: none; white-space: nowrap; }
 .index-row__num::before { content: '( '; } .index-row__num::after { content: ' )'; }
 .index-row__name { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.2rem, 2.6vw, 1.7rem); flex: 1 1 auto; letter-spacing: -.01em; }
 .index-row__meta { font-size: .82rem; color: var(--ink-soft); flex: none; max-width: 30ch; text-align: right; }
