@@ -29,7 +29,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 img { max-width: 100%; display: block; }
-a { color: inherit; }
+/* Excludes #world (the home page's cascade-layered scroll-engine mount) - an unlayered
+   rule always beats a layered one regardless of specificity, so this blanket reset would
+   otherwise silently override the engine's own .sw-topcta/.sw-brand color declarations,
+   turning white-on-white text invisible. :where() keeps the exclusion's specificity at
+   zero (an ID used directly inside :not() would otherwise spike this rule to ID-level
+   specificity and start beating .topcta and friends on every other page). */
+a:not(:where(#world *)) { color: inherit; }
 
 /* ---- layout shell ---- */
 .page { max-width: 1180px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 64px); }
