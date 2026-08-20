@@ -1,4 +1,4 @@
-/* site.js — word-splitting + scroll-reveal for every page except the home
+/* site.js - word-splitting + scroll-reveal for every page except the home
    cinematic (which drives its own reveals off scroll-scrub in scrub-engine.js).
    Splits any [data-words] element into per-word spans (same --wi stagger
    trick as titleWords() in scrub-engine.js), then reveals .reveal blocks once

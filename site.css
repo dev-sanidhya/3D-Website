@@ -1,5 +1,5 @@
 /* ============================================================================
-   site.css — shared design system for every page except the home cinematic
+   site.css - shared design system for every page except the home cinematic
    ----------------------------------------------------------------------------
    Same tokens/typography/animation language as scrub-engine.js's injected CSS
    (black/white/red, Space Grotesk + mono, blur-focus word reveal, growing-line quotes) so the
@@ -56,7 +56,7 @@ a { color: inherit; }
 .brand__mark::before { content: '+'; font-family: var(--font-dot); font-weight: 700; font-size: 13px; line-height: 1; color: var(--ink); }
 .brand__mark::after { content: ''; position: absolute; top: -2px; right: -2px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .brand__name { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; letter-spacing: -.01em; }
-/* Nav mirrors nothing.tech's actual chrome: no pill container, no fill — a plain flat
+/* Nav mirrors nothing.tech's actual chrome: no pill container, no fill - a plain flat
    row of tiny tracked mono caps with a hairline red underline marking the current page. */
 .nav { display: flex; gap: clamp(14px, 2.4vw, 26px); padding: 0; background: transparent; border-radius: 0; }
 .nav a {
@@ -72,7 +72,7 @@ a { color: inherit; }
   padding: 10px 20px; border-radius: 8px; white-space: nowrap; transition: transform .2s;
 }
 .topcta:hover { transform: translateY(-2px); }
-/* Mobile: the nav stays reachable (never fully hidden — a nav that vanishes with
+/* Mobile: the nav stays reachable (never fully hidden - a nav that vanishes with
    no fallback is a dead end, not a design choice) as a horizontally-scrollable strip,
    shrunk enough to coexist with the brand mark and CTA. */
 @media (max-width: 760px) {
@@ -85,7 +85,7 @@ a { color: inherit; }
 }
 
 /* ---- kinetic reveal system (mirrors scrub-engine.js's word/eyebrow/quote/tag motifs) ----
-   Nothing's own site is almost entirely monochrome — red shows up only as a single
+   Nothing's own site is almost entirely monochrome - red shows up only as a single
    functional dot or hairline, never as body-text color. The eyebrow follows that: plain
    white/grey label text, with one small red square doing the accent work. */
 .eyebrow {
@@ -154,14 +154,14 @@ a { color: inherit; }
 /* ---- imagery ---- */
 .img-caption { margin-top: 10px; font-size: .78rem; color: var(--ink-soft); }
 
-/* ---- About: full-bleed break — an edge-to-edge tall image as a dramatic pause between
+/* ---- About: full-bleed break - an edge-to-edge tall image as a dramatic pause between
    two text blocks, not a boxed banner. Breaks out of .page's max-width entirely. ---- */
 /* width:100vw + left:50%/margin:-50vw (the naive full-bleed trick) overflows by the
    scrollbar's width, because 100vw includes the scrollbar gutter but left:50% is computed
-   against the (scrollbar-excluded) containing block — the two disagree by ~15-17px.
+   against the (scrollbar-excluded) containing block - the two disagree by ~15-17px.
    calc(50% - 50vw) as a single expression uses the same reference for both halves of the
    subtraction, so it self-corrects regardless of scrollbar width. */
-/* overflow-x:hidden clips the entrance-animation's scale(1.05) state — on a full-viewport
+/* overflow-x:hidden clips the entrance-animation's scale(1.05) state - on a full-viewport
    element that transform paints past the edge until it settles to scale(1), which would
    otherwise flash a horizontal scrollbar during the reveal. */
 .bleed { margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); overflow-x: hidden; }
@@ -186,7 +186,7 @@ a { color: inherit; }
 .overlap-pair.is-in img:last-child { transform: rotate(2deg); }
 @media (max-width: 480px) { .overlap-pair { height: clamp(260px, 80vw, 360px); } }
 
-/* ---- Projects: an uneven filmstrip — one tall frame, two stacked, instead of a flat
+/* ---- Projects: an uneven filmstrip - one tall frame, two stacked, instead of a flat
    equal-sized grid. ---- */
 .filmstrip { display: grid; grid-template-columns: 1.3fr 1fr; gap: clamp(10px, 2vw, 16px); }
 .filmstrip__tall { grid-row: span 3; aspect-ratio: 3/4; object-fit: cover; width: 100%; height: 100%; }
@@ -196,7 +196,7 @@ a { color: inherit; }
 .filmstrip.is-in img:nth-child(2) { transition-delay: .12s; } .filmstrip.is-in img:nth-child(3) { transition-delay: .24s; } .filmstrip.is-in img:nth-child(4) { transition-delay: .36s; }
 @media (max-width: 620px) { .filmstrip { grid-template-columns: 1fr; } .filmstrip__tall { grid-row: auto; aspect-ratio: 16/10; } }
 
-/* ---- Contact: a true split screen — image fills half the viewport height, edge to
+/* ---- Contact: a true split screen - image fills half the viewport height, edge to
    edge, contact details fill the other half. Not a banner above content. ---- */
 .split-hero { display: grid; grid-template-columns: 1fr 1fr; min-height: 72vh; }
 .split-hero__img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.1s ease; }

@@ -1,5 +1,5 @@
 /* ============================================================================
-   scroll-world — portable scroll-scrubbed camera-flight engine
+   scroll-world - portable scroll-scrubbed camera-flight engine
    ----------------------------------------------------------------------------
    Framework-agnostic. Vanilla JS, zero dependencies. It builds its own DOM and
    injects its own (namespaced) CSS into a container you give it, so it drops into
@@ -16,9 +16,9 @@
        atmosphere: true,  // subtle gradient + drifting particles behind the clips
        sections: [
          { id, label, still, stillMobile, clip, clipMobile, accent,
-           scroll: 1.6,   // optional per-section override of diveScroll — more scroll
+           scroll: 1.6,   // optional per-section override of diveScroll - more scroll
                           // distance = a slower, longer dwell in this scene
-           linger: 0.5,   // optional 0..1 — remaps time so the camera settles mid-scene
+           linger: 0.5,   // optional 0..1 - remaps time so the camera settles mid-scene
                           // (exactly where the copy peaks) and moves quicker at the
                           // edges. 0 = linear (default). Keep ≤ 0.6; 1 = full pause.
            eyebrow, title, body, tags:[…],
@@ -32,7 +32,7 @@
    the rest of the phone handling below is always on)
      The engine is phone-aware out of the box: on a coarse-pointer / ≤860px viewport it
        - loads `clipMobile` / `connectorsMobile` when provided (encode these smaller +
-         tighter-GOP — seek cost on a phone decoder is dominated by frames-from-keyframe,
+         tighter-GOP - seek cost on a phone decoder is dominated by frames-from-keyframe,
          so a 720p, -g 4 file scrubs far smoother than the 1080p desktop master; see
          pipeline.md). Falls back to the desktop `clip` if no mobile variant is given.
        - uses `stillMobile` as the scene poster when provided (pair it with native 9:16
@@ -42,10 +42,10 @@
        - coalesces seeks (never issues a new currentTime while the decoder is still
          `seeking`) so fast flicks can't pile up and freeze the video.
        - keeps the still as a live poster until the clip actually paints its first frame,
-         and primes each video (muted play→pause) on first touch — this is what stops iOS
+         and primes each video (muted play→pause) on first touch - this is what stops iOS
          from showing a blank scene before the first seek.
        - drops the drifting particles and ignores URL-bar-only resizes (no scroll jump).
-     Nothing here is required — a config with only `clip`/`connectors` still works on
+     Nothing here is required - a config with only `clip`/`connectors` still works on
      phones; the mobile variants just make it lighter and smoother.
 
    THEME (CSS custom properties; set on the container or :root to override)
@@ -79,13 +79,13 @@ function mountScrollWorld(container, config) {
   const CROSSFADE = (config.crossfade != null) ? config.crossfade : 0.12;  // seam dissolve width (vh)
   // Opt-in: fetch every clip immediately at mount instead of waiting until scroll gets
   // near it. Off by default (a large N-scene chain shouldn't front-load everything), but
-  // worth it for a short film where the total payload is only a few MB — it trades a
+  // worth it for a short film where the total payload is only a few MB - it trades a
   // slightly heavier initial load for zero fetch-stalls while scrubbing.
   const EAGER = !!config.eagerLoad;
   // Source resolution + object-position of the encoded clips (see .sw-scene__video's
-  // object-position in injectCSS — keep these in sync). doorText/noteOverlay anchors are
+  // object-position in injectCSS - keep these in sync). doorText/noteOverlay anchors are
   // given as fractions of THIS source frame, then mapped through the same object-fit:cover
-  // math the browser uses for the video itself (see layout()'s coverScale/coverOffX/Y) —
+  // math the browser uses for the video itself (see layout()'s coverScale/coverOffX/Y) -
   // anything less than that drifts out of alignment with the baked-in video content the
   // moment the viewport aspect ratio isn't exactly the source's.
   const SRC_W = config.sourceWidth || 1280, SRC_H = config.sourceHeight || 720;
@@ -135,7 +135,7 @@ function mountScrollWorld(container, config) {
   const nav = el('nav', 'sw-nav'); if (config.nav !== false) topbar.appendChild(nav);
   if (config.cta && config.cta.label) {
     const c = el('a', 'sw-topcta'); c.href = config.cta.href || '#'; c.textContent = config.cta.label;
-    // A plain href can't scroll to the right spot — this page drives scroll position
+    // A plain href can't scroll to the right spot - this page drives scroll position
     // mathematically (see layout()/read()), there's no in-flow element at any #id for
     // the browser's native anchor jump to land on. Reuse the same jumpTo the route dots
     // use instead; href stays as a semantic fallback (e.g. no-JS).
@@ -146,7 +146,7 @@ function mountScrollWorld(container, config) {
   const stage = el('div', 'sw-stage');
   const copylayer = el('div', 'sw-copylayer');
   // Text keyed to a specific moment inside a single clip (a wordmark appearing as a door
-  // swings open, a note's handwriting being "replaced" by real buttons at the very end) —
+  // swings open, a note's handwriting being "replaced" by real buttons at the very end) -
   // distinct from copylayer's per-section side panel, which fades across the whole scene.
   const keylayer = el('div', 'sw-keylayer');
   const route = el('div', 'sw-route');
@@ -226,7 +226,7 @@ function mountScrollWorld(container, config) {
   // mid-scene pause. f(0)=0, f(1)=1 always, so seam frames are untouched.
   const lingerEase = (x, L) => { L = clamp(L); const c = x - 0.5; return (1 - L) * x + L * (4 * c * c * c + 0.5); };
   // Fades a keyed-text element in over [from-w, from], holds through [from, to], then
-  // fades out over [to, to+w] — used for text tied to a specific in-clip moment (a door
+  // fades out over [to, to+w] - used for text tied to a specific in-clip moment (a door
   // mid-swing) rather than the whole section's scroll range.
   const KEY_FADE_W = 0.06;
   function windowOpacity(x, from, to) {
@@ -289,7 +289,7 @@ function mountScrollWorld(container, config) {
   }
 
   function loadClip(s) {
-    // Under prefers-reduced-motion we never load the clips at all — the stills stay up
+    // Under prefers-reduced-motion we never load the clips at all - the stills stay up
     // and simply cross-dissolve as you scroll. No scrubbed video motion, no decode cost.
     if (reduce || s.loading || !s.clip) return;
     s.loading = true;
@@ -304,7 +304,7 @@ function mountScrollWorld(container, config) {
         v.src = URL.createObjectURL(blob);
         v.addEventListener('loadedmetadata', () => { s.ready = true; read(); });
         // Reveal the video (hide the still poster) only once a real frame has
-        // painted — on iOS a seeked-but-never-played muted video stays blank, so
+        // painted - on iOS a seeked-but-never-played muted video stays blank, so
         // hiding the still on metadata alone would flash an empty scene.
         v.addEventListener('seeked', () => { s.el.classList.add('has-clip'); }, { once: true });
         v.addEventListener('loadeddata', () => { try { v.pause(); } catch (e) {} if (userReady) primeVideo(v); });
@@ -332,8 +332,8 @@ function mountScrollWorld(container, config) {
         const sc = reduce ? 1 : 1.03 + local * 0.14;
         s.img.style.transform = `translateX(${stageX - 2}vw) scale(${sc.toFixed(3)})`;
       }
-      // doorText / noteOverlay are keyed to `s.target` — the section's actual VIDEO
-      // TIME progress (post-linger), not raw scroll fraction — so a moment like "the
+      // doorText / noteOverlay are keyed to `s.target` - the section's actual VIDEO
+      // TIME progress (post-linger), not raw scroll fraction - so a moment like "the
       // door is mid-swing" stays locked to that real frame even when `linger` remaps
       // scroll speed to dwell longer in the middle of the clip.
       if (s.kind === 'dive') {
@@ -350,7 +350,7 @@ function mountScrollWorld(container, config) {
         if (sec.noteOverlay) {
           const revealed = smooth((s.target - sec.noteOverlay.from) / Math.max(0.001, 1 - sec.noteOverlay.from));
           // s.target saturates at 1 and stays there once scrolled past this section (that's
-          // what makes the reveal hold through the settle) — but with real content
+          // what makes the reveal hold through the settle) - but with real content
           // following on the page now, it must also fade back OUT once you scroll past the
           // section itself, or it sits ghosted over whatever comes next forever. Mirrors
           // the route rail's own past-the-end fade.
@@ -372,10 +372,10 @@ function mountScrollWorld(container, config) {
       const before = y < seg.start, after = y > seg.end;
       let cop;
       // Only hold a section's copy open past its own dwell when it actually carries a
-      // reason to (a `cta` button or its own `noteOverlay`) — anything else, including
+      // reason to (a `cta` button or its own `noteOverlay`) - anything else, including
       // the last section, fades in/out like a normal mid-scene beat. Without this gate,
       // any section that happens to be last would hold its copy at full opacity forever
-      // once scrolled past — the same permanent-ghosting bug the route rail and note
+      // once scrolled past - the same permanent-ghosting bug the route rail and note
       // overlay both had, just for the side-panel copy instead.
       const holds = SECTIONS[i].cta || SECTIONS[i].noteOverlay;
       if (i === 0) cop = after ? 0 : smooth(1 - pr / 0.62);            // greets on landing
@@ -396,13 +396,13 @@ function mountScrollWorld(container, config) {
       nav.querySelectorAll('.sw-nav__item').forEach((n, k) => n.classList.toggle('is-active', k === near));
       container.style.setProperty('--sw-accent', SECTIONS[near].accent || '');
       // Re-triggers the word-cascade / tag pop-in every time a scene becomes the
-      // dominant one — including scrolling back up — not just once on first arrival.
+      // dominant one - including scrolling back up - not just once on first arrival.
       copies.forEach((c, k) => c.classList.toggle('is-in', k === near));
     }
     scrollbarFill.style.transform = `scaleX(${clamp(y / (totalW * vh))})`;
     hint.style.opacity = clamp(1 - y / (0.5 * vh));
     // The route rail AND the atmosphere sky (the diagonal gradient + radial glow behind
-    // every scene) are both chrome for the cinematic itself — fixed, full-viewport,
+    // every scene) are both chrome for the cinematic itself - fixed, full-viewport,
     // z-indexed above ordinary static content. Left alone past the last section, they'd
     // paint over whatever real page content follows (a menu, a footer) forever, since
     // neither ever had fade-out logic. Both fade out over the last 0.3vh of the track,
@@ -413,15 +413,15 @@ function mountScrollWorld(container, config) {
     route.style.pointerEvents = routeFade < 0.05 ? 'none' : '';
     sky.style.opacity = routeFade;
     // copylayer's ::before is the fixed dark scrim panel behind the side copy (for
-    // legibility over video) — same fixed/unfaded-forever issue as sky/route.
+    // legibility over video) - same fixed/unfaded-forever issue as sky/route.
     copylayer.style.opacity = routeFade;
     if (particles) particles.style.transform = `translate3d(0, ${-y * 0.05}px, 0)`;
     ticking = false;
   }
 
   // Seeking a <video> is far more expensive than a plain style write (decoder has to
-  // resolve from the nearest keyframe). Writing currentTime on every rAF tick — up to
-  // 120Hz on a high-refresh monitor — is what actually caused the lag; the lerp toward
+  // resolve from the nearest keyframe). Writing currentTime on every rAF tick - up to
+  // 120Hz on a high-refresh monitor - is what actually caused the lag; the lerp toward
   // `target` still runs every frame (cheap), but the seek itself is throttled to a
   // cadence the eye can't tell apart from 60Hz, roughly halving decode work.
   let lastSeekTs = 0;

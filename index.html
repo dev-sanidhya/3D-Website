@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ch+partners — Brilliant design. Simplicity at scale.</title>
+  <title>ch+partners - Brilliant design. Simplicity at scale.</title>
   <meta name="description" content="A six-year practice in architecture and interiors from Gachibowli, Hyderabad. Scroll to walk through a home." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23050505'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='20' font-weight='700' fill='%23FFFFFF' text-anchor='middle'%3E+%3C/text%3E%3Ccircle cx='26' cy='7' r='3' fill='%23FF2E2E'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,9 +23,9 @@
     }
     html, body { margin: 0; background: #050505; }
     /* Small site-page nav, inserted into the engine's fixed topbar after mount (see
-       script below) — sits between the brand mark and the section-jump pills so the
+       script below) - sits between the brand mark and the section-jump pills so the
        cinematic page still links to the rest of the site. Flat, tiny, tracked mono
-       caps with no pill fill — matches nothing.tech's actual nav chrome. */
+       caps with no pill fill - matches nothing.tech's actual nav chrome. */
     .page-nav { display: flex; gap: 16px; }
     .page-nav a {
       font-family: var(--sw-font-mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .04em;
@@ -35,7 +35,7 @@
     .page-nav a:hover { color: var(--sw-ink); background: transparent; }
     @media (max-width: 900px) { .page-nav { display: none; } }
 
-    /* The fancy "menu" landing that follows the cinematic — a full-screen destination
+    /* The fancy "menu" landing that follows the cinematic - a full-screen destination
        index. Hovering a row cross-fades a background photo behind the whole section via
        :has(), no JS required. This is where the visit actually "lands" once the
        walkthrough ends, before it hands off to the rest of the site. */
@@ -52,7 +52,7 @@
     .menu:has(.menu-item[data-target="services"]:hover) .menu-bg__img[data-for="services"],
     .menu:has(.menu-item[data-target="projects"]:hover) .menu-bg__img[data-for="projects"],
     .menu:has(.menu-item[data-target="contact"]:hover) .menu-bg__img[data-for="contact"] { opacity: .45; }
-    /* Extra top clearance so the eyebrow/headline never render under the fixed topbar —
+    /* Extra top clearance so the eyebrow/headline never render under the fixed topbar -
        min-height:100vh + centered content means a tall menu can push its first line up
        near the viewport top, which is exactly where the topbar always sits. */
     .menu-fg { position: relative; z-index: 1; width: 100%; padding: clamp(110px, 16vh, 160px) 0 clamp(64px, 10vh, 120px); }
@@ -141,7 +141,7 @@
         <div>
           <div class="footer__label">ch+partners</div>
           <p class="lede" style="margin-top:0;max-width:36ch;">Architecture, engineering and interiors, from
-            Gachibowli — est. 2018.</p>
+            Gachibowli - est. 2018.</p>
         </div>
         <div>
           <div class="footer__label">Site</div>
@@ -190,12 +190,12 @@
           // The brand mark appears burned into the door itself as it swings open
           // (door cracks ~t=0.8s, fully open ~t=2s of this 8s clip) and dissolves
           // before the camera passes through into the hallway. x/y are fractions of
-          // the 1280x720 source frame — mapped through the same object-fit:cover math
+          // the 1280x720 source frame - mapped through the same object-fit:cover math
           // as the video itself (see srcToScreen in scrub-engine.js).
           doorText: { text: 'ch+partners', from: 0.30, to: 0.70, x: 0.50, y: 0.40, srcFontPx: 100, zoom: 0.28 },
-          eyebrow: 'Est. 2018 — Gachibowli, Hyderabad',
+          eyebrow: 'Est. 2018 - Gachibowli, Hyderabad',
           title: 'Brilliant design. Simplicity at scale.',
-          body: 'Architecture, engineering, interiors — one studio, led by Chandu S R Krishna.',
+          body: 'Architecture, engineering, interiors - one studio, led by Chandu S R Krishna.',
           tags: ['Jali & brass', 'Makrana marble'],
         },
         {
@@ -217,10 +217,10 @@
           accent: '#C9A24B',
           scroll: 1.7, linger: 0.5,
           eyebrow: 'How we work',
-          quote: 'The most elegant and minimal solution to a structural challenge — the inevitable one, where nothing more can be removed.',
+          quote: 'The most elegant and minimal solution to a structural challenge - the inevitable one, where nothing more can be removed.',
           quoteAttribution: 'ch+partners, on structural engineering',
           // The code-driven "Let's design yours." + contact-links handoff is pulled for
-          // now — the reveal timing needs real rework, not a patch. The video's own baked
+          // now - the reveal timing needs real rework, not a patch. The video's own baked
           // "Let's design yours." note (visible mid-clip, then blows away) still plays;
           // this just removes the follow-up crossfade into live contact buttons.
         },
@@ -229,7 +229,7 @@
     });
 
     // Insert real site navigation into the engine's topbar, between the brand mark and
-    // the section-jump pills — mountScrollWorld only knows about this page's own scroll
+    // the section-jump pills - mountScrollWorld only knows about this page's own scroll
     // sections, not the rest of the site, so this is wired in separately rather than
     // touching scrub-engine.js (which stays a page-agnostic, reusable engine).
     (function () {
