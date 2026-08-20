@@ -2,19 +2,20 @@
    site.css — shared design system for every page except the home cinematic
    ----------------------------------------------------------------------------
    Same tokens/typography/animation language as scrub-engine.js's injected CSS
-   (monochrome, Fraunces, blur-focus word reveal, growing-line quotes) so the
+   (black/white/red, Space Grotesk + mono, blur-focus word reveal, growing-line quotes) so the
    whole site reads as one system. The home page keeps its own scroll-driven
    engine; these pages use a tiny IntersectionObserver (site.js) to trigger the
    same `.is-in` reveal classes on scroll-into-view instead of scroll-scrub.
    ========================================================================== */
 
 :root {
-  --bg: #0A0A0A;
-  --ink: #F5F5F3;
-  --ink-soft: #9A9A96;
-  --accent: #C9A24B;
-  --font-display: 'Fraunces', serif;
-  --font-body: 'Fraunces', serif;
+  --bg: #050505;
+  --ink: #FFFFFF;
+  --ink-soft: #7A7A7A;
+  --accent: #FF2E2E;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 }
 
 * { box-sizing: border-box; }
@@ -47,13 +48,13 @@ a { color: inherit; }
 }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
 .brand__mark {
-  width: 24px; height: 28px; border-radius: 7px 7px 10px 10px;
-  background: linear-gradient(160deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #000));
-  box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 40%, transparent);
+  position: relative; width: 24px; height: 24px; border-radius: 2px;
+  border: 1.5px solid var(--ink); background: transparent;
   display: grid; place-items: center; flex: none;
 }
-.brand__mark::before { content: '+'; font-family: var(--font-display); font-weight: 700; font-size: 17px; line-height: 1; color: var(--bg); transform: translateY(-1px); }
-.brand__name { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; }
+.brand__mark::before { content: '+'; font-family: var(--font-mono); font-weight: 700; font-size: 14px; line-height: 1; color: var(--ink); }
+.brand__mark::after { content: ''; position: absolute; top: -2px; right: -2px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.brand__name { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; letter-spacing: -.01em; }
 .nav { display: flex; gap: 4px; padding: 5px; background: color-mix(in srgb, var(--ink) 8%, transparent); border-radius: 999px; }
 .nav a {
   font-size: .84rem; text-decoration: none; color: color-mix(in srgb, var(--ink) 70%, transparent);
@@ -80,8 +81,8 @@ a { color: inherit; }
 
 /* ---- kinetic reveal system (mirrors scrub-engine.js's word/eyebrow/quote/tag motifs) ---- */
 .eyebrow {
-  display: inline-block; font-family: var(--font-display); font-weight: 600; font-style: italic;
-  font-size: .82rem; letter-spacing: .5em; text-indent: .5em; text-transform: uppercase;
+  display: inline-block; font-family: var(--font-mono); font-weight: 500; font-style: normal;
+  font-size: .78rem; letter-spacing: .5em; text-indent: .5em; text-transform: uppercase;
   color: color-mix(in srgb, var(--accent) 85%, transparent);
   transition: letter-spacing .9s cubic-bezier(.16,1,.3,1), text-indent .9s cubic-bezier(.16,1,.3,1), opacity .6s ease;
   opacity: 0;
@@ -112,7 +113,7 @@ a { color: inherit; }
   transform: scaleY(0); transform-origin: top; transition: transform .9s cubic-bezier(.16,1,.3,1) .4s;
 }
 .reveal.is-in .quote { opacity: 1; } .reveal.is-in .quote::before { transform: scaleY(1); }
-.quote p { margin: 0; font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: clamp(1.1rem, 1.6vw, 1.4rem); line-height: 1.5; color: var(--ink); }
+.quote p { margin: 0; font-family: var(--font-display); font-style: normal; font-weight: 500; font-size: clamp(1.1rem, 1.6vw, 1.4rem); line-height: 1.4; color: var(--ink); }
 .quote cite { display: block; margin-top: 12px; font-style: normal; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
 
 .tags { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 0; padding: 0; }
@@ -134,8 +135,8 @@ a { color: inherit; }
 }
 .index-row.is-in { opacity: 1; transform: none; }
 .index-list .index-row:last-child { border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); }
-.index-row__num { font-family: ui-monospace, Menlo, monospace; font-size: .8rem; color: var(--ink-soft); flex: none; width: 2.4em; }
-.index-row__name { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.2rem, 2.6vw, 1.7rem); flex: 1 1 auto; }
+.index-row__num { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-soft); flex: none; width: 2.4em; }
+.index-row__name { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.2rem, 2.6vw, 1.7rem); flex: 1 1 auto; letter-spacing: -.01em; }
 .index-row__meta { font-size: .82rem; color: var(--ink-soft); flex: none; max-width: 30ch; text-align: right; }
 @media (max-width: 620px) { .index-row { flex-wrap: wrap; } .index-row__meta { text-align: left; max-width: none; } }
 
