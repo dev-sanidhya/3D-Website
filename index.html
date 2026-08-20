@@ -8,7 +8,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23050505'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='20' font-weight='700' fill='%23FFFFFF' text-anchor='middle'%3E+%3C/text%3E%3Ccircle cx='26' cy='7' r='3' fill='%23FF2E2E'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@200;300;400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="site.css" />
   <style>
     :root, .sw-root {
@@ -16,21 +16,23 @@
       --sw-ink: #FFFFFF;
       --sw-ink-soft: #7A7A7A;
       --sw-accent: #FF2E2E;
-      --sw-font-display: 'Space Grotesk', sans-serif;
+      --sw-font-display: 'Hanken Grotesk', sans-serif;
       --sw-font-body: 'Inter', sans-serif;
       --sw-font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+      --sw-font-dot: 'Silkscreen', monospace;
     }
     html, body { margin: 0; background: #050505; }
     /* Small site-page nav, inserted into the engine's fixed topbar after mount (see
        script below) — sits between the brand mark and the section-jump pills so the
-       cinematic page still links to the rest of the site. */
-    .page-nav { display: flex; gap: 2px; }
+       cinematic page still links to the rest of the site. Flat, tiny, tracked mono
+       caps with no pill fill — matches nothing.tech's actual nav chrome. */
+    .page-nav { display: flex; gap: 16px; }
     .page-nav a {
-      font-family: var(--sw-font-body); font-size: .82rem; text-decoration: none;
-      color: color-mix(in srgb, var(--sw-ink) 65%, transparent); padding: 6px 12px;
-      border-radius: 999px; transition: color .2s, background .2s;
+      font-family: var(--sw-font-mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .04em;
+      text-decoration: none; color: color-mix(in srgb, var(--sw-ink) 62%, transparent); padding: 4px 0;
+      border-radius: 0; transition: color .2s;
     }
-    .page-nav a:hover { color: var(--sw-ink); background: color-mix(in srgb, var(--sw-ink) 10%, transparent); }
+    .page-nav a:hover { color: var(--sw-ink); background: transparent; }
     @media (max-width: 900px) { .page-nav { display: none; } }
 
     /* The fancy "menu" landing that follows the cinematic — a full-screen destination
@@ -61,8 +63,9 @@
       transition: padding-left .35s cubic-bezier(.16,1,.3,1);
     }
     .menu-item:hover { padding-left: 18px; }
-    .menu-item__num { font-family: var(--sw-font-mono); font-size: .8rem; color: var(--sw-ink-soft); flex: none; width: 2.4em; }
-    .menu-item__title { font-family: var(--sw-font-display); font-weight: 600; font-size: clamp(1.8rem, 5vw, 3.4rem); flex: 1 1 auto; letter-spacing: -.02em; }
+    .menu-item__num { font-family: var(--sw-font-dot); font-size: .85rem; color: var(--sw-ink-soft); flex: none; width: 3.6em; }
+    .menu-item__num::before { content: '( '; } .menu-item__num::after { content: ' )'; }
+    .menu-item__title { font-family: var(--sw-font-display); font-weight: 500; font-size: clamp(1.8rem, 5vw, 3.4rem); flex: 1 1 auto; letter-spacing: -.02em; }
     .menu-item__meta { font-size: .85rem; color: var(--sw-ink-soft); flex: none; max-width: 26ch; text-align: right; }
     .menu-item__arrow { flex: none; font-size: 1.4rem; opacity: 0; transform: translateX(-8px); transition: opacity .3s, transform .3s; }
     .menu-item:hover .menu-item__arrow { opacity: 1; transform: none; }
