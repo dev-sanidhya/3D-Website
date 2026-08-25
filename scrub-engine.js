@@ -172,6 +172,10 @@ function mountScrollWorld(container, config) {
   const copies = [], dots = [];
   SECTIONS.forEach((s, i) => {
     const c = el('article', 'sw-copy'); c.style.setProperty('--sw-accent', s.accent || '');
+    // A per-section modifier class (sw-copy--plot, sw-copy--structure, …) is what lets
+    // each scene run its own entrance/exit choreography instead of one reusable
+    // animation - see the [data-phase] rules in injectCSS, keyed off s.id.
+    if (s.id) c.classList.add('sw-copy--' + s.id);
     c.innerHTML =
       `<span class="sw-copy__num">${pad(i + 1)} / ${pad(N)}</span>` +
       (s.eyebrow ? `<span class="sw-copy__eyebrow">${esc(s.eyebrow)}</span>` : '') +
@@ -229,6 +233,13 @@ function mountScrollWorld(container, config) {
   // fades out over [to, to+w] - used for text tied to a specific in-clip moment (a door
   // mid-swing) rather than the whole section's scroll range.
   const KEY_FADE_W = 0.06;
+  // Per-section copy drift (vw/vh at full scroll travel through that scene) - see the
+  // per-section loop in read(). Kept small and deliberately different per scene rather
+  // than one shared value, so each heading's parallax reads as tied to that scene's own
+  // camera move (plot/structure stay near-neutral so their own choreography reads clean;
+  // complete drifts toward the direction of its establishing dolly; arrival drifts the
+  // opposite way, as if left behind while the camera pushes on through the door).
+  const PARALLAX = { plot: { x: 0, y: 3 }, structure: { x: 0, y: 3.5 }, complete: { x: 5, y: 3 }, arrival: { x: -4, y: 2.5 } };
   function windowOpacity(x, from, to) {
     if (x < from - KEY_FADE_W) return 0;
     if (x < from) return smooth((x - (from - KEY_FADE_W)) / KEY_FADE_W);
@@ -261,22 +272,28 @@ function mountScrollWorld(container, config) {
     coverScale = Math.max(cw / SRC_W, ch / SRC_H);
     coverOffX = (cw - SRC_W * coverScale) * (OBJ_POS[0] / 100);
     coverOffY = (ch - SRC_H * coverScale) * (OBJ_POS[1] / 100);
+    // On a tall narrow viewport, object-fit:cover has to scale the 16:9 source up a lot
+    // just to fill the height - coverScale alone can balloon a keyed wordmark (sized off
+    // that same scale) well past the screen width. Capping keyed text at a fraction of
+    // viewport width keeps it legible on phones without changing its size/position on
+    // desktop, where coverScale rarely gets that extreme.
+    const keyFontPx = srcPx => Math.min(srcPx * coverScale, cw * 0.16);
     SECTIONS.forEach(sec => {
       if (sec.doorText && sec._doorEl) {
         const p = srcToScreen(sec.doorText.x, sec.doorText.y);
         sec._doorEl.style.left = p.x + 'px'; sec._doorEl.style.top = p.y + 'px';
-        sec._doorEl.style.fontSize = (sec.doorText.srcFontPx * coverScale) + 'px';
+        sec._doorEl.style.fontSize = keyFontPx(sec.doorText.srcFontPx) + 'px';
       }
       if (sec.noteOverlay) {
         if (sec._noteTitleEl) {
           const p = srcToScreen(sec.noteOverlay.titleX, sec.noteOverlay.titleY);
           sec._noteTitleEl.style.left = p.x + 'px'; sec._noteTitleEl.style.top = p.y + 'px';
-          sec._noteTitleEl.style.fontSize = (sec.noteOverlay.titleSrcFontPx * coverScale) + 'px';
+          sec._noteTitleEl.style.fontSize = keyFontPx(sec.noteOverlay.titleSrcFontPx) + 'px';
         }
         if (sec._noteLinksEl) {
           const p = srcToScreen(sec.noteOverlay.linksX, sec.noteOverlay.linksY);
           sec._noteLinksEl.style.left = p.x + 'px'; sec._noteLinksEl.style.top = p.y + 'px';
-          sec._noteLinksEl.style.fontSize = (sec.noteOverlay.linksSrcFontPx * coverScale) + 'px';
+          sec._noteLinksEl.style.fontSize = keyFontPx(sec.noteOverlay.linksSrcFontPx) + 'px';
         }
       }
     });
@@ -383,8 +400,21 @@ function mountScrollWorld(container, config) {
       else cop = (before || after) ? 0 : smooth(1 - Math.abs(pr - 0.5) / 0.5);
       const c = copies[i];
       c.style.opacity = cop;
-      c.style.transform = reduce ? 'none' : `translateY(${(0.5 - pr) * 4}vh)`;
+      // Per-section drift: a small, section-specific translate tied to scroll progress
+      // through THIS scene (not a shared value) - so the heading reads as riding along
+      // with that scene's own camera move rather than sitting static on glass. Complete
+      // drifts left-to-right with the establishing dolly; arrival drifts the opposite way,
+      // as if being left behind as the camera pushes through the door; plot/structure stay
+      // closer to neutral so the scale-pop / rise choreography reads clearly on its own.
+      const px = PARALLAX[SECTIONS[i].id] || { x: 0, y: 4 };
+      c.style.transform = reduce ? 'none' : `translate(${((pr - 0.5) * px.x).toFixed(2)}vw, ${((0.5 - pr) * px.y).toFixed(2)}vh)`;
       c.style.pointerEvents = cop > 0.5 ? 'auto' : 'none';
+      // Three-state phase (before / in / after) - distinct from `near` below - drives each
+      // section's own entrance AND exit choreography via [data-phase] CSS (see injectCSS).
+      // Unlike a single shared "is-in" flag, this lets a heading's exit motion be a
+      // completely different move from its entrance, per the brief.
+      const phase = before ? 'before' : (after ? 'after' : 'in');
+      if (c.dataset.phase !== phase) c.dataset.phase = phase;
     }
 
     const cur = SEGMENTS[ci];
@@ -395,9 +425,6 @@ function mountScrollWorld(container, config) {
       dots.forEach((d, k) => d.classList.toggle('is-active', k === near));
       nav.querySelectorAll('.sw-nav__item').forEach((n, k) => n.classList.toggle('is-active', k === near));
       container.style.setProperty('--sw-accent', SECTIONS[near].accent || '');
-      // Re-triggers the word-cascade / tag pop-in every time a scene becomes the
-      // dominant one - including scrolling back up - not just once on first arrival.
-      copies.forEach((c, k) => c.classList.toggle('is-in', k === near));
     }
     scrollbarFill.style.transform = `scaleX(${clamp(y / (totalW * vh))})`;
     hint.style.opacity = clamp(1 - y / (0.5 * vh));
@@ -408,13 +435,23 @@ function mountScrollWorld(container, config) {
     // neither ever had fade-out logic. Both fade out over the last 0.3vh of the track,
     // in sync with the final scene's own crossfade-out; route also drops pointer-events
     // once invisible so it can't eat clicks on the content underneath during the fade.
-    const routeFade = clamp(1 - Math.max(0, y - (totalW * vh - 0.3 * vh)) / (0.3 * vh));
+    const chromeEnd = totalW * vh - 0.3 * vh;
+    const routeFade = clamp(1 - Math.max(0, y - chromeEnd) / (0.3 * vh));
     route.style.opacity = routeFade;
     route.style.pointerEvents = routeFade < 0.05 ? 'none' : '';
     sky.style.opacity = routeFade;
     // copylayer's ::before is the fixed dark scrim panel behind the side copy (for
     // legibility over video) - same fixed/unfaded-forever issue as sky/route.
     copylayer.style.opacity = routeFade;
+    // The topbar stays hidden for the whole cinematic - the video should be the only
+    // thing on screen while it plays - and only reveals once the track has fully
+    // scrolled past (mirrors routeFade's own end-of-track window, just inverted).
+    // Scrolling back up into the cinematic hides it again, since this reads straight
+    // off scroll position rather than a one-shot "has it ever finished" flag.
+    const topbarOp = clamp((y - chromeEnd) / (0.3 * vh));
+    topbar.style.opacity = topbarOp;
+    topbar.style.transform = `translateY(${(1 - topbarOp) * -14}px)`;
+    topbar.style.pointerEvents = topbarOp > 0.4 ? 'auto' : 'none';
     if (particles) particles.style.transform = `translate3d(0, ${-y * 0.05}px, 0)`;
     ticking = false;
   }
@@ -488,11 +525,28 @@ function mountScrollWorld(container, config) {
   function el(tag, cls) { const n = document.createElement(tag); if (cls) n.className = cls; return n; }
   function pad(n) { return String(n).padStart(2, '0'); }
   function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
-  // Wraps each word in its own span carrying a --wi index, so CSS can stagger the
-  // entrance transition-delay per word (see .sw-word in injectCSS) for a cascading,
-  // kinetic-typography reveal instead of the whole title fading in as one block.
+  // Wraps each character in a masked span (overflow:hidden outer + translating inner),
+  // carrying a running --ci index so CSS can stagger the entrance delay per letter (see
+  // .sw-char/.sw-char__inner in injectCSS) - each letter rises up from behind a hidden
+  // mask and sharpens into focus, instead of the whole title (or whole words) fading in
+  // as flat blocks. Words stay grouped in their own nowrap span so line-wraps still
+  // happen at word boundaries. Escaping happens per-character (not on the whole title
+  // first) so a split never breaks an HTML entity apart.
   function titleWords(title) {
-    return esc(title).split(' ').map((w, i) => `<span class="sw-word" style="--wi:${i}">${w}</span>`).join(' ');
+    const total = String(title).replace(/ /g, '').length;
+    let i = 0;
+    return String(title).split(' ').map(w => {
+      const chars = w.split('').map(ch => {
+        const idx = i++;
+        // --cir is the same index counted from the END of the title - a variant's exit
+        // choreography can key its transition-delay off this instead of --ci to cascade
+        // in reverse (last letter leaves first), so an exit doesn't just look like the
+        // entrance rewound. See the [data-phase="after"] rules in injectCSS.
+        const rev = total - 1 - idx;
+        return `<span class="sw-char" style="--ci:${idx};--cir:${rev}"><span class="sw-char__inner">${esc(ch)}</span></span>`;
+      }).join('');
+      return `<span class="sw-word">${chars}</span>`;
+    }).join(' ');
   }
   function ctaBtns(cta) {
     let h = '';
@@ -538,7 +592,8 @@ function injectCSS() {
   @keyframes sw-drift{0%{opacity:0;transform:scale(var(--sw-sc)) translate(0,12vh) rotate(0)}12%{opacity:.5}88%{opacity:.45}100%{opacity:0;transform:scale(var(--sw-sc)) translate(4vw,-22vh) rotate(210deg)}}
   .sw-scrollbar{position:fixed;top:0;left:0;right:0;height:3px;z-index:60;background:color-mix(in srgb,var(--sw-accent) 14%,transparent);}
   .sw-scrollbar span{display:block;height:100%;width:100%;transform-origin:0 50%;transform:scaleX(0);background:var(--sw-accent);}
-  .sw-topbar{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:clamp(14px,2.4vw,26px) clamp(18px,5vw,64px);}
+  .sw-topbar{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:clamp(14px,2.4vw,26px) clamp(18px,5vw,64px);
+    opacity:0;transform:translateY(-14px);pointer-events:none;transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1);}
   .sw-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--sw-ink);}
   .sw-brand__mark{position:relative;width:24px;height:24px;border-radius:2px;border:1.5px solid var(--sw-ink);background:transparent;display:grid;place-items:center;}
   .sw-brand__mark::before{content:'+';font-family:var(--sw-font-dot,ui-monospace,Menlo,monospace);font-weight:700;font-size:13px;line-height:1;color:var(--sw-ink);}
@@ -557,10 +612,10 @@ function injectCSS() {
   .sw-copylayer{position:fixed;inset:0;z-index:20;pointer-events:none;}
   .sw-keylayer{position:fixed;inset:0;z-index:22;pointer-events:none;}
   .sw-doortext{position:absolute;transform:translate(-50%,-50%);opacity:0;white-space:nowrap;
-    font-family:var(--sw-font-display);font-weight:700;letter-spacing:.02em;
-    background:linear-gradient(100deg,var(--sw-accent),#fff 45%,var(--sw-accent));background-size:220% 100%;
-    -webkit-background-clip:text;background-clip:text;color:transparent;animation:sw-shimmer 6s linear infinite;
-    filter:drop-shadow(0 6px 22px rgba(0,0,0,.55));}
+    font-family:var(--sw-font-mark,var(--sw-font-display));font-weight:900;font-style:normal;letter-spacing:.01em;
+    background:linear-gradient(100deg,var(--sw-mark-color-1,var(--sw-accent)),var(--sw-mark-color-2,#fff) 45%,var(--sw-mark-color-1,var(--sw-accent)));background-size:220% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:sw-shimmer 7s linear infinite;
+    filter:drop-shadow(0 6px 26px rgba(0,0,0,.6));}
   .sw-note__title{position:absolute;transform:translate(-50%,-50%);opacity:0;text-align:center;white-space:nowrap;
     font-family:'Alex Brush',cursive;font-weight:400;line-height:1.15;color:#111;
     text-shadow:0 2px 10px rgba(255,255,255,.3);}
@@ -577,24 +632,79 @@ function injectCSS() {
     text-shadow:0 1px 8px color-mix(in srgb,var(--sw-bg) 70%,transparent);
     transition:letter-spacing .9s cubic-bezier(.16,1,.3,1),text-indent .9s cubic-bezier(.16,1,.3,1);}
   .sw-copy__eyebrow::before{content:'';display:inline-block;width:6px;height:6px;margin-right:.7em;margin-bottom:1px;background:var(--sw-accent);}
-  .sw-copy.is-in .sw-copy__eyebrow{letter-spacing:.16em;text-indent:0;}
-  .sw-copy__title{font-family:var(--sw-font-display);font-weight:300;color:var(--sw-ink);font-size:clamp(2rem,4.4vw,3.5rem);line-height:1.02;margin:14px 0 0;letter-spacing:-.02em;overflow:visible;}
-  .sw-word{display:inline-block;opacity:0;filter:blur(9px);transform:translateY(24px) scale(1.04);text-shadow:0 2px 20px color-mix(in srgb,var(--sw-bg) 70%,transparent);
-    transition:opacity .7s cubic-bezier(.16,1,.3,1),filter .7s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1);transition-delay:calc(var(--wi,0) * 90ms);}
-  .sw-copy.is-in .sw-word{opacity:1;filter:blur(0);transform:none;}
-  .sw-copy__body{margin-top:20px;font-size:clamp(1rem,1.25vw,1.14rem);line-height:1.6;color:color-mix(in srgb,var(--sw-ink) 78%,var(--sw-ink-soft));max-width:40ch;text-shadow:0 1px 12px color-mix(in srgb,var(--sw-bg) 90%,transparent);
-    opacity:0;transform:translateY(14px);transition:opacity .5s ease .3s,transform .5s cubic-bezier(.22,1.4,.4,1) .3s;}
-  .sw-copy.is-in .sw-copy__body{opacity:1;transform:none;}
+  .sw-copy[data-phase="in"] .sw-copy__eyebrow{letter-spacing:.16em;text-indent:0;}
+  .sw-copy__title{font-family:var(--sw-font-mark,var(--sw-font-display));font-weight:600;font-style:normal;color:var(--sw-ink);font-size:clamp(2.1rem,4.7vw,3.7rem);line-height:1.04;margin:14px 0 0;letter-spacing:-.01em;overflow:visible;}
+  .sw-word{display:inline-block;white-space:nowrap;}
+  .sw-char{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.14em;margin-bottom:-.14em;}
+
+  /* ---- Per-scene heading choreography -------------------------------------------
+     Each scene gets its own entrance AND exit path (never a mirrored rewind of the
+     entrance) via the three-state [data-phase] attribute JS drives per section (see
+     read()). A shared base below is the fallback for anything without its own variant;
+     .sw-copy--<id> blocks override it with a scene-specific move. */
+  .sw-char__inner{display:inline-block;opacity:0;filter:blur(11px);transform:translateY(115%) scale(1.06);text-shadow:0 2px 20px color-mix(in srgb,var(--sw-bg) 70%,transparent);
+    transition:opacity .6s cubic-bezier(.16,1,.3,1),filter .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1);transition-delay:calc(var(--ci,0) * 26ms);}
+  .sw-copy[data-phase="in"] .sw-char__inner{opacity:1;filter:blur(0);transform:translateY(0) scale(1);}
+  .sw-copy[data-phase="after"] .sw-char__inner{opacity:0;filter:blur(8px);transform:translateY(-28px) scale(1.03);transition-delay:calc(var(--cir,0) * 18ms);}
+
+  /* Plot - the survey stake going in: title chars pop from a tiny point while the
+     whole heading's letter-spacing collapses inward, like lines being drawn tight on
+     paper. Exit lets it drift quietly upward and apart, as if lifted off the page. */
+  .sw-copy--plot .sw-copy__title{transition:letter-spacing .9s cubic-bezier(.16,1,.3,1);letter-spacing:.5em;}
+  .sw-copy--plot[data-phase="in"] .sw-copy__title{letter-spacing:-.01em;}
+  .sw-copy--plot[data-phase="after"] .sw-copy__title{letter-spacing:.1em;}
+  .sw-copy--plot .sw-char__inner{transform:scale(.22) translateY(0);filter:blur(16px);}
+  .sw-copy--plot[data-phase="in"] .sw-char__inner{transform:scale(1) translateY(0);filter:blur(0);}
+  .sw-copy--plot[data-phase="after"] .sw-char__inner{transform:scale(1.08) translateY(-30px);filter:blur(9px);transition-delay:calc(var(--cir,0) * 16ms);}
+
+  /* Structure - columns rising: letters climb up out of the ground with a slight
+     lean, like scaffolding going up one bay at a time. On exit the word splits down
+     the middle, odd/even letters peeling apart in opposite directions - a wall
+     dividing, not a fade. Runs on the slower mid-section linger, so give it the
+     longest, most deliberate cascade of the four scenes. */
+  .sw-copy--structure .sw-char__inner{transform:translateY(165%) skewY(9deg);filter:blur(9px);
+    transition-duration:.62s,.62s,.72s;transition-delay:calc(var(--ci,0) * 34ms);}
+  .sw-copy--structure[data-phase="in"] .sw-char__inner{transform:translateY(0) skewY(0);filter:blur(0);}
+  .sw-copy--structure[data-phase="after"] .sw-char:nth-child(odd) .sw-char__inner{transform:translateX(-52px) translateY(-10px) rotate(-7deg);filter:blur(6px);transition-delay:calc(var(--ci,0) * 12ms);}
+  .sw-copy--structure[data-phase="after"] .sw-char:nth-child(even) .sw-char__inner{transform:translateX(52px) translateY(10px) rotate(7deg);filter:blur(6px);transition-delay:calc(var(--ci,0) * 12ms);}
+
+  /* Complete - the establishing reveal: heading slides in on a shallow diagonal from
+     the left with tracking compressed, matching the camera's forward dolly, then
+     keeps drifting the SAME direction on exit while tracking keeps expanding - the
+     text rides the reveal all the way out instead of snapping back. */
+  .sw-copy--complete .sw-copy__title{transition:letter-spacing .8s cubic-bezier(.16,1,.3,1);letter-spacing:-.06em;}
+  .sw-copy--complete[data-phase="in"] .sw-copy__title{letter-spacing:-.01em;}
+  .sw-copy--complete[data-phase="after"] .sw-copy__title{letter-spacing:.13em;}
+  .sw-copy--complete .sw-char__inner{transform:translate(-48px,14px) scale(1.04);filter:blur(12px);}
+  .sw-copy--complete[data-phase="in"] .sw-char__inner{transform:translate(0,0) scale(1);filter:blur(0);}
+  .sw-copy--complete[data-phase="after"] .sw-char__inner{transform:translate(54px,-16px) scale(1.02);filter:blur(7px);}
+
+  /* Arrival - the doorway: no per-letter cascade here at all - the heading is
+     revealed and hidden by a clip-path wipe on the title itself, opening left-to-
+     right like the door swinging into frame, and sweeping closed the SAME direction
+     on exit (not reversed) as the camera pushes on through. */
+  .sw-copy--arrival .sw-copy__title{clip-path:inset(0 100% 0 0);transition:clip-path .85s cubic-bezier(.16,1,.3,1);}
+  .sw-copy--arrival[data-phase="in"] .sw-copy__title{clip-path:inset(0 0 0 0);}
+  .sw-copy--arrival[data-phase="after"] .sw-copy__title{clip-path:inset(0 0 0 102%);}
+  .sw-copy--arrival[data-phase] .sw-char__inner{opacity:1;filter:none;transform:none;transition:none;}
+
+  /* Deliberately caption-sized, not a second heading - this is only ever meant to carry
+     the rare fact the title/eyebrow can't (e.g. the founder's name), not restate the
+     scene. It used to render at near-heading size, which read as a wall of body copy
+     competing with the title over the footage. */
+  .sw-copy__body{margin-top:14px;font-size:.8rem;line-height:1.5;letter-spacing:.01em;color:var(--sw-ink-soft);max-width:32ch;text-shadow:0 1px 10px color-mix(in srgb,var(--sw-bg) 90%,transparent);
+    opacity:0;transform:translateY(10px);transition:opacity .5s ease .3s,transform .5s cubic-bezier(.22,1.4,.4,1) .3s;}
+  .sw-copy[data-phase="in"] .sw-copy__body{opacity:1;transform:none;}
   .sw-copy__quote{margin:24px 0 0;padding-left:20px;position:relative;max-width:34ch;opacity:0;transition:opacity .6s ease .45s;}
   .sw-copy__quote::before{content:'';position:absolute;left:0;top:2px;bottom:2px;width:2px;background:var(--sw-accent);
     transform:scaleY(0);transform-origin:top;transition:transform .8s cubic-bezier(.16,1,.3,1) .45s;}
-  .sw-copy.is-in .sw-copy__quote{opacity:1;} .sw-copy.is-in .sw-copy__quote::before{transform:scaleY(1);}
+  .sw-copy[data-phase="in"] .sw-copy__quote{opacity:1;} .sw-copy[data-phase="in"] .sw-copy__quote::before{transform:scaleY(1);}
   .sw-copy__quote p{margin:0;font-family:var(--sw-font-display);font-style:normal;font-weight:500;font-size:1.05rem;line-height:1.4;color:var(--sw-ink);}
   .sw-copy__quote cite{display:block;margin-top:10px;font-style:normal;font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;color:var(--sw-ink-soft);}
   .sw-copy__tags{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 0;padding:0;}
   .sw-copy__tags li{font-family:var(--sw-font-mono,ui-monospace,Menlo,monospace);font-size:.72rem;font-weight:400;text-transform:uppercase;letter-spacing:.03em;color:var(--sw-ink);padding:7px 12px;border-radius:6px;background:color-mix(in srgb,var(--sw-bg) 40%,transparent);border:1px solid color-mix(in srgb,var(--sw-ink) 26%,transparent);
     opacity:0;transform:translateY(10px) scale(.85);transition:opacity .4s ease,transform .4s cubic-bezier(.3,1.6,.4,1);}
-  .sw-copy.is-in .sw-copy__tags li{opacity:1;transform:none;}
+  .sw-copy[data-phase="in"] .sw-copy__tags li{opacity:1;transform:none;}
   .sw-copy__tags li:nth-child(1){transition-delay:.62s;} .sw-copy__tags li:nth-child(2){transition-delay:.69s;}
   .sw-copy__tags li:nth-child(3){transition-delay:.76s;} .sw-copy__tags li:nth-child(4){transition-delay:.83s;}
   @keyframes sw-shimmer{0%{background-position:0% 0}100%{background-position:220% 0}}
@@ -639,7 +749,8 @@ function injectCSS() {
     .sw-btn{padding:15px 26px;}
   }
   @media (prefers-reduced-motion:reduce){ .sw-hint i::after{animation:none;} .sw-pt{display:none;}
-    .sw-word,.sw-copy__body,.sw-copy__tags li,.sw-copy__quote,.sw-copy__quote::before{transition:none;opacity:1;transform:none;filter:none;}
+    .sw-char__inner,.sw-copy__body,.sw-copy__tags li,.sw-copy__quote,.sw-copy__quote::before{transition:none;opacity:1;transform:none;filter:none;}
+    .sw-copy__title{transition:none;clip-path:none;letter-spacing:-.01em;}
     .sw-copy__eyebrow{transition:none;letter-spacing:.16em;text-indent:0;animation:none;background-position:0 0;}
     .sw-doortext{animation:none;background-position:0 0;} }
   `;
