@@ -56,11 +56,15 @@
      --sw-font-display / --sw-font-body
 
    REQUIREMENTS ON YOUR ASSETS
-     - clips encoded native-res, crf~20, -g 8, +faststart, no audio (see pipeline.md)
+     - clips encoded native-res, crf~26-28, -g 8, +faststart, no audio (see pipeline.md)
      - connectors' endpoints are the neighbouring dives' ACTUAL frames (see SKILL Step 5)
      - (optional) mobile variants at ~720p, -g 4 for smoother phone scrubbing
-   The engine loads each clip as a Blob (always seekable) and scrubs currentTime; it does
-   NOT depend on HTTP byte-range support.
+   The engine points each clip's <video> straight at its URL and scrubs currentTime -
+   it relies on the host serving HTTP range requests (Accept-Ranges: bytes / 206
+   Partial Content), which every static host worth using (Vercel included) does. This
+   is what lets a clip start decoding after only its first chunk instead of blocking on
+   a full-file download, and why the tight -g 8 keyframe interval matters: an
+   out-of-buffer seek only needs to fetch back to the nearest keyframe.
    ========================================================================== */
 
 function mountScrollWorld(container, config) {
@@ -312,21 +316,30 @@ function mountScrollWorld(container, config) {
     s.loading = true;
     // Serve the lighter mobile encode on phones when one was provided.
     const url = (isMobile() && s.clipM) ? s.clipM : s.clip;
-    fetch(url).then(r => r.ok ? r.blob() : Promise.reject(new Error('404')))
-      .then(blob => {
-        const v = document.createElement('video');
-        v.className = 'sw-scene__video';
-        v.muted = true; v.playsInline = true; v.preload = 'auto';
-        v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
-        v.src = URL.createObjectURL(blob);
-        v.addEventListener('loadedmetadata', () => { s.ready = true; read(); });
-        // Reveal the video (hide the still poster) only once a real frame has
-        // painted - on iOS a seeked-but-never-played muted video stays blank, so
-        // hiding the still on metadata alone would flash an empty scene.
-        v.addEventListener('seeked', () => { s.el.classList.add('has-clip'); }, { once: true });
-        v.addEventListener('loadeddata', () => { try { v.pause(); } catch (e) {} if (userReady) primeVideo(v); });
-        s.el.appendChild(v); s.video = v; s.hasClip = true;
-      }).catch(() => { s.loading = false; });
+    // Point the <video> straight at the URL instead of fetch()-ing the whole file into
+    // a Blob first. The old blob approach forced every clip to fully download before a
+    // single frame could show - with eagerLoad on, that meant ~25MB in flight on page
+    // load before the FIRST scene was even scrubbable. A host that serves HTTP range
+    // requests (confirmed here: Vercel's static hosting returns 206 Partial Content /
+    // Accept-Ranges: bytes) lets the browser start decoding from just the first
+    // fetched chunk and pull additional byte ranges on demand as currentTime seeks
+    // outside what's buffered - the same mechanism every native <video> scrubber
+    // relies on. Combined with the tight -g 8 keyframe interval the clips are already
+    // encoded with, an out-of-buffer seek only has to fetch back to the nearest
+    // keyframe, not the whole file.
+    const v = document.createElement('video');
+    v.className = 'sw-scene__video';
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+    v.addEventListener('loadedmetadata', () => { s.ready = true; read(); });
+    // Reveal the video (hide the still poster) only once a real frame has
+    // painted - on iOS a seeked-but-never-played muted video stays blank, so
+    // hiding the still on metadata alone would flash an empty scene.
+    v.addEventListener('seeked', () => { s.el.classList.add('has-clip'); }, { once: true });
+    v.addEventListener('loadeddata', () => { try { v.pause(); } catch (e) {} if (userReady) primeVideo(v); });
+    v.addEventListener('error', () => { s.loading = false; }, { once: true });
+    v.src = url;
+    s.el.appendChild(v); s.video = v; s.hasClip = true;
   }
 
   function read() {

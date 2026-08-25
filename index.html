@@ -185,12 +185,20 @@
       hint: 'scroll to begin',
       diveScroll: 1.3,
       connScroll: 0.9,
-      eagerLoad: true,
+      // eagerLoad was fetching all four clips (~25MB) as soon as the page opened,
+      // before the user had scrolled a single pixel - by far the biggest cause of the
+      // "nothing loads" stall on open. read()'s own proximity check already loads a
+      // section's clip once it's within 1.6vh of view, which is what actually matters:
+      // the first scene loads immediately (it starts in-range at y=0), later scenes
+      // load just ahead of being scrolled into rather than all competing for
+      // bandwidth up front.
+      eagerLoad: false,
       sections: [
         {
           id: 'plot', label: 'The Plot',
           still: 'assets/stills/plot.jpg',
           clip: 'assets/vid/plot.mp4',
+          clipMobile: 'assets/vid/mobile_plot.mp4',
           accent: '#FF2E2E',
           scroll: 1.5, linger: 0.3,
           eyebrow: 'Before anything else',
@@ -201,6 +209,7 @@
           id: 'structure', label: 'The Structure',
           still: 'assets/stills/structure.jpg',
           clip: 'assets/vid/structure.mp4',
+          clipMobile: 'assets/vid/mobile_structure.mp4',
           accent: '#FF2E2E',
           // This is the mid-stage of the build and previously had zero linger while
           // its neighbours all did - the camera raced through it. A touch more scroll
@@ -220,6 +229,7 @@
           id: 'complete', label: 'The Villa',
           still: 'assets/stills/complete.jpg',
           clip: 'assets/vid/complete.mp4',
+          clipMobile: 'assets/vid/mobile_complete.mp4',
           accent: '#FF2E2E',
           scroll: 1.7, linger: 0.4,
           eyebrow: 'Months later',
@@ -230,6 +240,7 @@
           id: 'arrival', label: 'Arrival',
           still: 'assets/stills/arrival.jpg',
           clip: 'assets/vid/arrival.mp4',
+          clipMobile: 'assets/vid/mobile_arrival.mp4',
           accent: '#FF2E2E',
           scroll: 1.8, linger: 0.45,
           // The brand mark appears burned into the door itself as it swings open.
