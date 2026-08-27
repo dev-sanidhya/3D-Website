@@ -350,7 +350,15 @@ function mountScrollWorld(container, config) {
 
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
-      if (y > s.start - 1.6 * vh && y < s.end + 1.6 * vh) loadClip(s);
+      // Lookahead margin before a clip's own scroll range - this is what actually
+      // determines whether a clip has finished buffering by the time you scroll into
+      // it. 1.6vh wasn't enough lead time for a section two or three scenes down the
+      // page (by the time its own range came into this window, there often wasn't
+      // enough runway left to finish the download before you scrolled into it,
+      // showing a frozen poster instead of video). 4vh gives roughly two full scenes'
+      // worth of head start, so a later section is already mid-buffer well before you
+      // reach it - it only costs an earlier network request, not more total bytes.
+      if (y > s.start - 4 * vh && y < s.end + 1.6 * vh) loadClip(s);
       const local = clamp((y - s.start) / (s.end - s.start), 0, 1);
       s.target = s.linger ? lingerEase(local, s.linger) : local;
       let outside = 0;
