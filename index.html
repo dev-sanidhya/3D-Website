@@ -89,11 +89,15 @@
   <main>
     <section class="menu">
       <div class="menu-bg" aria-hidden="true">
-        <img class="menu-bg__img is-default" src="assets/stills/menu-default.jpg" alt="" />
-        <img class="menu-bg__img" data-for="about" src="assets/stills/menu-about.jpg" alt="" />
-        <img class="menu-bg__img" data-for="services" src="assets/stills/menu-services.jpg" alt="" />
-        <img class="menu-bg__img" data-for="projects" src="assets/stills/menu-projects.jpg" alt="" />
-        <img class="menu-bg__img" data-for="contact" src="assets/stills/menu-contact.jpg" alt="" />
+        <!-- These sit behind the "Where to next?" section, which only appears after
+             scrolling through the entire cinematic - loading="lazy" defers this ~770KB
+             of images until the browser is actually about to paint them, instead of
+             competing with the hero video's own network requests up front. -->
+        <img class="menu-bg__img is-default" src="assets/stills/menu-default.jpg" alt="" loading="lazy" />
+        <img class="menu-bg__img" data-for="about" src="assets/stills/menu-about.jpg" alt="" loading="lazy" />
+        <img class="menu-bg__img" data-for="services" src="assets/stills/menu-services.jpg" alt="" loading="lazy" />
+        <img class="menu-bg__img" data-for="projects" src="assets/stills/menu-projects.jpg" alt="" loading="lazy" />
+        <img class="menu-bg__img" data-for="contact" src="assets/stills/menu-contact.jpg" alt="" loading="lazy" />
       </div>
       <div class="menu-fg page reveal">
         <span class="eyebrow">You've seen it come together</span>
