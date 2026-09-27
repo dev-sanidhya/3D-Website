@@ -350,15 +350,20 @@ function mountScrollWorld(container, config) {
 
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
-      // Lookahead margin before a clip's own scroll range - this is what actually
-      // determines whether a clip has finished buffering by the time you scroll into
-      // it. 1.6vh wasn't enough lead time for a section two or three scenes down the
-      // page (by the time its own range came into this window, there often wasn't
-      // enough runway left to finish the download before you scrolled into it,
-      // showing a frozen poster instead of video). 4vh gives roughly two full scenes'
-      // worth of head start, so a later section is already mid-buffer well before you
-      // reach it - it only costs an earlier network request, not more total bytes.
-      if (y > s.start - 4 * vh && y < s.end + 1.6 * vh) loadClip(s);
+      // Two-tier lookahead before a clip's own scroll range. The near tier (1.6vh)
+      // loads immediately - this is "you're about to need this". The far tier (out to
+      // 4vh - roughly two scenes' worth of head start) queues the load on a delay
+      // instead of firing it instantly: without the stagger, a page-load moment where
+      // 2-3 clips all start fetching in the same instant just makes them compete for
+      // the same bandwidth, which can slow the ONE you're about to scroll into more
+      // than it helps the ones further out. staggerMs increases with distance, so
+      // nearer-but-not-yet-near clips still jump the queue ahead of farther ones.
+      const dist = s.start - y;
+      if (y > s.start - 1.6 * vh && y < s.end + 1.6 * vh) loadClip(s);
+      else if (dist > 0 && dist < 4 * vh && !s.loading && !s.hasClip && !s._lookaheadTimer) {
+        const staggerMs = 500 + (dist / vh) * 300;
+        s._lookaheadTimer = setTimeout(() => { s._lookaheadTimer = null; loadClip(s); }, staggerMs);
+      }
       const local = clamp((y - s.start) / (s.end - s.start), 0, 1);
       s.target = s.linger ? lingerEase(local, s.linger) : local;
       let outside = 0;
