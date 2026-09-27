@@ -344,7 +344,7 @@ function mountScrollWorld(container, config) {
     v.addEventListener('seeked', () => { s.el.classList.add('has-clip'); }, { once: true });
     v.addEventListener('loadeddata', () => {
       try { v.pause(); } catch (e) {}
-      if (userReady) primeVideo(v);
+      primeVideo(v);
       if (v.currentTime < 0.005) { try { v.currentTime = 0.01; } catch (e) {} }
     });
     v.addEventListener('error', () => { s.loading = false; }, { once: true });
@@ -360,20 +360,15 @@ function mountScrollWorld(container, config) {
 
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
-      // Two-tier lookahead before a clip's own scroll range. The near tier (1.6vh)
-      // loads immediately - this is "you're about to need this". The far tier (out to
-      // 4vh - roughly two scenes' worth of head start) queues the load on a delay
-      // instead of firing it instantly: without the stagger, a page-load moment where
-      // 2-3 clips all start fetching in the same instant just makes them compete for
-      // the same bandwidth, which can slow the ONE you're about to scroll into more
-      // than it helps the ones further out. staggerMs increases with distance, so
-      // nearer-but-not-yet-near clips still jump the queue ahead of farther ones.
-      const dist = s.start - y;
-      if (y > s.start - 1.6 * vh && y < s.end + 1.6 * vh) loadClip(s);
-      else if (dist > 0 && dist < 4 * vh && !s.loading && !s.hasClip && !s._lookaheadTimer) {
-        const staggerMs = 500 + (dist / vh) * 300;
-        s._lookaheadTimer = setTimeout(() => { s._lookaheadTimer = null; loadClip(s); }, staggerMs);
-      }
+      // Lookahead margin before a clip's own scroll range - this is what determines
+      // whether a clip has finished buffering by the time you scroll into it. A
+      // staggered version of this used to delay farther-out clips to protect the
+      // active one's bandwidth, but that traded away exactly what actually matters:
+      // getting every clip started as early as possible. Vercel serves over HTTP/2,
+      // which multiplexes concurrent range requests over one connection well enough
+      // that firing all of them immediately beats an artificial delay - the goal is
+      // "everything is already loading", not "one thing loads slightly faster".
+      if (y > s.start - 4 * vh && y < s.end + 1.6 * vh) loadClip(s);
       const local = clamp((y - s.start) / (s.end - s.start), 0, 1);
       s.target = s.linger ? lingerEase(local, s.linger) : local;
       let outside = 0;
@@ -520,13 +515,20 @@ function mountScrollWorld(container, config) {
     requestAnimationFrame(raf);
   }
 
-  // iOS needs a user gesture before a muted video will decode/paint reliably. On the
-  // first touch we prime every loaded clip (muted play→pause) so the first seek is
-  // instant instead of showing a blank frame. `userReady` also makes freshly-loaded
-  // clips prime themselves (see loadClip).
+  // A <video> that's only ever been programmatically seeked - never actually played -
+  // can render completely black even once fully loaded (readyState 4, correct
+  // currentTime, valid videoWidth/videoHeight - the frame is decoded, it just never
+  // gets composited). A muted play()-then-immediate-pause() forces a real paint. This
+  // used to be gated to mobile-only + a user gesture (pointerdown/touchstart), on the
+  // assumption desktop didn't need it - wrong: desktop Chrome hits the exact same
+  // black-frame issue, and a scroll-only visit (mouse wheel, trackpad) never fires
+  // pointerdown/touchstart at all, so the priming never ran and most sections stayed
+  // black except whichever one happened to be mid-scrub when you looked. Muted
+  // video.play() needs no user gesture in any modern browser, so this now runs
+  // unconditionally as soon as a clip has data - see the "loadeddata" listener above.
   let userReady = false;
   function primeVideo(v) {
-    if (!isMobile() || !v) return;
+    if (!v) return;
     try { const p = v.play(); if (p && p.then) p.then(() => { try { v.pause(); } catch (e) {} }).catch(() => {}); }
     catch (e) {}
   }
