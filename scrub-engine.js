@@ -334,9 +334,19 @@ function mountScrollWorld(container, config) {
     v.addEventListener('loadedmetadata', () => { s.ready = true; read(); });
     // Reveal the video (hide the still poster) only once a real frame has
     // painted - on iOS a seeked-but-never-played muted video stays blank, so
-    // hiding the still on metadata alone would flash an empty scene.
+    // hiding the still on metadata alone would flash an empty scene. But relying on
+    // "seeked" alone silently breaks for whichever section is active AT PAGE LOAD
+    // (almost always the first one): its scroll target is already ~0, matching a
+    // freshly-loaded video's own currentTime of 0, so raf()'s seek in read() never
+    // actually moves currentTime and "seeked" never fires - the poster then sits
+    // there forever even though the video is fully ready. Forcing one tiny nudge once
+    // real frame data exists guarantees an actual seek happens at least once.
     v.addEventListener('seeked', () => { s.el.classList.add('has-clip'); }, { once: true });
-    v.addEventListener('loadeddata', () => { try { v.pause(); } catch (e) {} if (userReady) primeVideo(v); });
+    v.addEventListener('loadeddata', () => {
+      try { v.pause(); } catch (e) {}
+      if (userReady) primeVideo(v);
+      if (v.currentTime < 0.005) { try { v.currentTime = 0.01; } catch (e) {} }
+    });
     v.addEventListener('error', () => { s.loading = false; }, { once: true });
     v.src = url;
     s.el.appendChild(v); s.video = v; s.hasClip = true;
