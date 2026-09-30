@@ -66,6 +66,54 @@
   </section>
 
   <section class="page section section--border-top reveal">
+    <span class="eyebrow">Real work, not renders</span>
+    <h2 class="headline headline--lg" data-words>What we actually build.</h2>
+    <p class="lede">Two details from a finished home - keep scrolling.</p>
+  </section>
+
+  <section class="reveal-stage" data-align="left">
+    <div class="reveal-stage__track">
+      <div class="reveal-stage__pin">
+        <div class="reveal-stage__media">
+          <div class="reveal-stage__frame">
+            <img src="assets/stills/feature-door.jpg" alt="Hand-carved teak entrance door with a backlit brass jali screen" />
+          </div>
+        </div>
+        <div class="reveal-stage__copy">
+          <span class="eyebrow">Entrance, reimagined</span>
+          <h3 class="reveal-stage__title">A door worth pausing at.</h3>
+          <ul class="reveal-stage__list">
+            <li>Solid teak, carved by hand</li>
+            <li>Backlit brass jali screen</li>
+            <li>Finished on-site - no factory shortcuts</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="reveal-stage" data-align="right">
+    <div class="reveal-stage__track">
+      <div class="reveal-stage__pin">
+        <div class="reveal-stage__media">
+          <div class="reveal-stage__frame">
+            <img src="assets/stills/feature-wardrobe.jpg" alt="Custom wardrobe wall with cane-inlay doors" />
+          </div>
+        </div>
+        <div class="reveal-stage__copy">
+          <span class="eyebrow">Joinery, up close</span>
+          <h3 class="reveal-stage__title">Storage, carved like furniture.</h3>
+          <ul class="reveal-stage__list">
+            <li>Teak veneer, hand-finished</li>
+            <li>Cane inlay, woven - not printed</li>
+            <li>Soft-close hardware throughout</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page section section--border-top reveal">
     <span class="eyebrow">In their words</span>
     <blockquote class="quote" style="padding-left:22px;max-width:52ch;">
       <p>"Finally I got best interior in hyderabad.. don't think more just go for him"</p>
@@ -110,5 +158,62 @@
 
   <script src="site.js"></script>
   <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+  <script>
+    // Drives the two .reveal-stage sections above: scroll position (not a timer) maps
+    // to a 3D rotate-then-zoom on the photo, which settles just before the feature list
+    // staggers in. Each stage alternates rotation axis/direction so the second one
+    // doesn't read as a copy-pasted repeat of the first.
+    (function () {
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var stages = document.querySelectorAll('.reveal-stage');
+      if (reduce || !stages.length) return;
+
+      var clamp = function (x, a, b) { return Math.min(b, Math.max(a, x)); };
+      var easeOutCubic = function (x) { return 1 - Math.pow(1 - x, 3); };
+      var ticking = false;
+
+      var configs = Array.from(stages).map(function (stage, i) {
+        return {
+          track: stage.querySelector('.reveal-stage__track'),
+          frame: stage.querySelector('.reveal-stage__frame'),
+          copy: stage.querySelector('.reveal-stage__copy'),
+          items: Array.from(stage.querySelectorAll('.reveal-stage__list li')),
+          axis: i % 2 === 0 ? 'Y' : 'X',
+          dir: i % 2 === 0 ? -1 : 1,
+        };
+      });
+
+      function update() {
+        var vh = window.innerHeight;
+        configs.forEach(function (c) {
+          var rect = c.track.getBoundingClientRect();
+          var total = rect.height - vh;
+          var raw = total > 0 ? clamp(-rect.top / total, 0, 1) : 0;
+          // Phase A (0-0.55): photo turns from an angle to face-on while zooming in.
+          // Phase B (0.5-1): it settles back slightly and the copy/list stagger in.
+          var pA = easeOutCubic(clamp(raw / 0.55, 0, 1));
+          var pB = clamp((raw - 0.5) / 0.5, 0, 1);
+          var angle = (1 - pA) * 26 * c.dir;
+          var scale = 0.74 + pA * 0.34 - pB * 0.06;
+          var rotateFn = c.axis === 'Y' ? 'rotateY' : 'rotateX';
+          c.frame.style.transform = 'perspective(1600px) ' + rotateFn + '(' + angle.toFixed(2) + 'deg) scale(' + scale.toFixed(3) + ')';
+          c.copy.style.opacity = pB.toFixed(3);
+          c.copy.style.transform = 'translateY(' + ((1 - pB) * 22).toFixed(1) + 'px)';
+          c.items.forEach(function (li, i) {
+            var d = clamp((pB - i * 0.12) / 0.5, 0, 1);
+            li.style.opacity = d.toFixed(3);
+            li.style.transform = 'translateY(' + ((1 - d) * 10).toFixed(1) + 'px)';
+          });
+        });
+        ticking = false;
+      }
+
+      window.addEventListener('scroll', function () {
+        if (!ticking) { ticking = true; requestAnimationFrame(update); }
+      }, { passive: true });
+      window.addEventListener('resize', update);
+      update();
+    })();
+  </script>
 </body>
 </html>
