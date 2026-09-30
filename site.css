@@ -202,6 +202,52 @@ a:not(:where(#world *)) { color: inherit; }
 .filmstrip.is-in img:nth-child(2) { transition-delay: .12s; } .filmstrip.is-in img:nth-child(3) { transition-delay: .24s; } .filmstrip.is-in img:nth-child(4) { transition-delay: .36s; }
 @media (max-width: 620px) { .filmstrip { grid-template-columns: 1fr; } .filmstrip__tall { grid-row: auto; aspect-ratio: 16/10; } }
 
+/* ---- reveal-stage: an Apple-product-page-style scroll-driven photo reveal. A tall
+   scroll "track" pins its content in the viewport for the duration; scroll position
+   (not a timer) drives a 3D rotate from an angle to face-on plus a zoom, which settles
+   just before a short feature list staggers in beside it. Built for one or two photos
+   at a time, not a gallery - the whole point is a single choreographed moment, not a
+   grid. Each instance can rotate on a different axis/direction (set via JS per index)
+   so a page using it twice doesn't feel like the same effect repeated. */
+.reveal-stage { position: relative; }
+.reveal-stage__track { height: 280vh; }
+.reveal-stage__pin {
+  position: sticky; top: 0; height: 100vh;
+  display: flex; align-items: center; justify-content: center; gap: clamp(24px, 6vw, 80px);
+  overflow: hidden; padding: 0 clamp(20px, 6vw, 64px);
+}
+.reveal-stage[data-align="right"] .reveal-stage__pin { flex-direction: row-reverse; }
+.reveal-stage__media { flex: 1 1 46%; max-width: 560px; perspective: 1600px; }
+.reveal-stage__frame {
+  position: relative; aspect-ratio: 3 / 4; border-radius: 18px; overflow: hidden;
+  background: #0c0c0c; box-shadow: 0 40px 90px -30px rgba(0,0,0,.7);
+  transform-style: preserve-3d; will-change: transform;
+}
+.reveal-stage__frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.reveal-stage__copy { flex: 1 1 40%; max-width: 420px; opacity: 0; transform: translateY(28px); will-change: opacity, transform; }
+.reveal-stage__title {
+  font-family: var(--font-display); font-weight: 300; color: var(--ink); line-height: 1.08;
+  font-size: clamp(1.7rem, 3.2vw, 2.6rem); letter-spacing: -.02em; margin: 14px 0 0;
+}
+.reveal-stage__list { list-style: none; margin: 24px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.reveal-stage__list li {
+  position: relative; padding-left: 22px; font-size: 1rem; line-height: 1.4;
+  color: color-mix(in srgb, var(--ink) 82%, var(--ink-soft));
+  opacity: 0; transform: translateY(10px); will-change: opacity, transform;
+}
+.reveal-stage__list li::before { content: ''; position: absolute; left: 0; top: .6em; width: 8px; height: 1.5px; background: var(--accent); }
+@media (max-width: 860px) {
+  .reveal-stage__track { height: 220vh; }
+  .reveal-stage__pin { flex-direction: column !important; justify-content: center; gap: 28px; padding: 40px clamp(20px, 6vw, 40px); }
+  .reveal-stage__media, .reveal-stage__copy { max-width: 460px; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-stage__track { height: auto; }
+  .reveal-stage__pin { position: relative; height: auto; padding: 60px clamp(20px, 6vw, 40px); }
+  .reveal-stage__frame { transform: none !important; }
+  .reveal-stage__copy, .reveal-stage__list li { opacity: 1 !important; transform: none !important; }
+}
+
 /* ---- Contact: a true split screen - image fills half the viewport height, edge to
    edge, contact details fill the other half. Not a banner above content. ---- */
 .split-hero { display: grid; grid-template-columns: 1fr 1fr; min-height: 72vh; }
