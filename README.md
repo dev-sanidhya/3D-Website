@@ -1,44 +1,32 @@
-# CH+ Partners — 3D scroll-world rebrand
+# CH+ Partners website
 
-A scroll-driven cinematic landing page for [chpluspartners.com](https://chpluspartners.com/)
-(residential interior design, Hyderabad), built with the
-[`scroll-world`](https://github.com/oso95/scroll-world) technique: scroll drives a single
-continuous camera flight through a photoreal AI-rendered home, no cuts.
+The site combines a scroll-driven homepage with the studio's service pages and a project-based interior gallery.
 
-Adapted to use **Google Flow** instead of the skill's default paid Monid/Higgsfield
-backend — see [`PROMPTS.md`](./PROMPTS.md) for the exact prompts to run there.
+## Pages and assets
 
-## Status
+- `index.html` and `scrub-engine.js` drive the scroll-controlled home sequence. Poster stills appear before video frames are ready.
+- `about.html`, `services.html`, `projects.html`, `testimonials.html`, `contact.html`, `privacy.html` and `terms.html` are the supporting pages.
+- `gallery.html`, `gallery.js` and `gallery-data.js` render project cards, photo stories and the full-screen photo viewer.
+- `assets/gallery/` keeps the original JPGs. `assets/gallery/optimized/` holds the smaller WebP card and grid images; the viewer opens the original JPG.
+- `assets/stills/` and `assets/vid/` hold the homepage posters and video clips.
 
-Scaffold only. Waiting on 6 rendered clips + 1 still from Google Flow (see `PROMPTS.md`
-Step 3) before the page has real visuals.
+## Adding gallery photos
 
-## Structure
+Keep original JPGs in `assets/gallery/`, then generate or refresh their WebP thumbnails with:
 
-```
-index.html          — the page (config-driven, see mountScrollWorld call at the bottom)
-scrub-engine.js      — portable vanilla-JS scroll-scrub engine (from scroll-world skill)
-PROMPTS.md           — Google Flow prompts, in order, for every scene
-assets/
-  stills/            — poster frame per scene (first frame of each clip)
-  vid/               — the 6 rendered .mp4 clips
+```bash
+python -m pip install Pillow
+python optimize_gallery_images.py
 ```
 
-## Once you have the Flow clips
-
-Hand them to me in order (entrance → living → kitchen & dining → primary suite → atelier →
-finale) and I'll:
-1. Extract poster stills from each clip's first frame
-2. Re-encode at GOP 8, crf 20, faststart, no audio (ffmpeg)
-3. Drop everything into `assets/` matching the paths already wired in `index.html`
-4. Serve it locally and QA the seams
+Add each photo to the appropriate project's `photos` array in `gallery-data.js` with its original pixel dimensions and a useful alt description. Add new projects there with a unique `id`, a `coverId`, descriptive title and copy, and an ordered photo list. Project titles currently describe the two supplied image sets; replace them with the studio's official names when available.
 
 ## Local preview
 
-Any static file server works, e.g.:
+Run a static server from this directory, for example:
 
 ```bash
-python -m http.server 8080
+python -m http.server 8123
 ```
 
-Then open `http://localhost:8080`.
+Then open `http://localhost:8123`. Python's simple server does not support byte-range requests for MP4 files, so use a range-capable server when measuring video transfer or seeking performance.
