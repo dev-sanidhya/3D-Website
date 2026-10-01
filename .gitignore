@@ -1,1 +1,11 @@
 .vercel
+
+# Local agent context
+CLAUDE.md
+AGENTS.md
+MEMORY.md
+ERRORS.md
+SESSION_NOTES.md
+.claude/
+.agents/
+.playwright-cli/
