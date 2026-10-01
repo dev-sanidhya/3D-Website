@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ch+partners - Brilliant design. Simplicity at scale.</title>
   <meta name="description" content="A six-year practice in architecture and interiors from Gachibowli, Hyderabad. Scroll to watch a home rise from bare plot to finished villa." />
+  <link rel="preload" as="image" href="assets/stills/plot.jpg" fetchpriority="high" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23050505'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='20' font-weight='700' fill='%23FFFFFF' text-anchor='middle'%3E+%3C/text%3E%3Ccircle cx='26' cy='7' r='3' fill='%23FF2E2E'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@200;300;400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Silkscreen:wght@400;700&family=Fraunces:opsz,wght@9..144,600..900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@200;300;400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Silkscreen:wght@400;700&family=Fraunces:opsz,wght@9..144,600..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <link rel="stylesheet" href="site.css" />
   <style>
     :root, .sw-root {
@@ -89,15 +90,13 @@
   <main>
     <section class="menu">
       <div class="menu-bg" aria-hidden="true">
-        <!-- These sit behind the "Where to next?" section, which only appears after
-             scrolling through the entire cinematic - loading="lazy" defers this ~770KB
-             of images until the browser is actually about to paint them, instead of
-             competing with the hero video's own network requests up front. -->
-        <img class="menu-bg__img is-default" src="assets/stills/menu-default.jpg" alt="" loading="lazy" />
-        <img class="menu-bg__img" data-for="about" src="assets/stills/menu-about.jpg" alt="" loading="lazy" />
-        <img class="menu-bg__img" data-for="services" src="assets/stills/menu-services.jpg" alt="" loading="lazy" />
-        <img class="menu-bg__img" data-for="projects" src="assets/stills/menu-projects.jpg" alt="" loading="lazy" />
-        <img class="menu-bg__img" data-for="contact" src="assets/stills/menu-contact.jpg" alt="" loading="lazy" />
+        <!-- These are attached when the section approaches the viewport so they do not
+             compete with the opening posters and video for bandwidth. -->
+        <img class="menu-bg__img is-default" data-src="assets/stills/menu-default.jpg" alt="" loading="lazy" />
+        <img class="menu-bg__img" data-for="about" data-src="assets/stills/menu-about.jpg" alt="" loading="lazy" />
+        <img class="menu-bg__img" data-for="services" data-src="assets/stills/menu-services.jpg" alt="" loading="lazy" />
+        <img class="menu-bg__img" data-for="projects" data-src="assets/stills/menu-projects.jpg" alt="" loading="lazy" />
+        <img class="menu-bg__img" data-for="contact" data-src="assets/stills/menu-contact.jpg" alt="" loading="lazy" />
       </div>
       <div class="menu-fg page reveal">
         <span class="eyebrow">You've seen it come together</span>
@@ -190,20 +189,15 @@
       hint: 'scroll to begin',
       diveScroll: 1.3,
       connScroll: 0.9,
-      // eagerLoad was fetching all four clips (~25MB) as soon as the page opened,
-      // before the user had scrolled a single pixel - by far the biggest cause of the
-      // "nothing loads" stall on open. read()'s own proximity check already loads a
-      // section's clip once it's within 1.6vh of view, which is what actually matters:
-      // the first scene loads immediately (it starts in-range at y=0), later scenes
-      // load just ahead of being scrolled into rather than all competing for
-      // bandwidth up front.
+      // The engine loads the current scene video first and warms the next one halfway
+      // through the current scene. The first poster is preloaded above for immediate paint.
       eagerLoad: false,
       sections: [
         {
           id: 'plot', label: 'The Plot',
           still: 'assets/stills/plot.jpg',
           clip: 'assets/vid/plot.mp4',
-          clipMobile: 'assets/vid/mobile_plot.mp4',
+          clipMobile: 'assets/vid/mobile_plot_portrait.mp4',
           accent: '#FF2E2E',
           scroll: 1.5, linger: 0.3,
           eyebrow: 'Before anything else',
@@ -214,7 +208,7 @@
           id: 'structure', label: 'The Structure',
           still: 'assets/stills/structure.jpg',
           clip: 'assets/vid/structure.mp4',
-          clipMobile: 'assets/vid/mobile_structure.mp4',
+          clipMobile: 'assets/vid/mobile_structure_portrait.mp4',
           accent: '#FF2E2E',
           // This is the mid-stage of the build and previously had zero linger while
           // its neighbours all did - the camera raced through it. A touch more scroll
@@ -234,7 +228,7 @@
           id: 'complete', label: 'The Villa',
           still: 'assets/stills/complete.jpg',
           clip: 'assets/vid/complete.mp4',
-          clipMobile: 'assets/vid/mobile_complete.mp4',
+          clipMobile: 'assets/vid/mobile_complete_portrait.mp4',
           accent: '#FF2E2E',
           scroll: 1.7, linger: 0.4,
           eyebrow: 'Months later',
@@ -245,7 +239,7 @@
           id: 'arrival', label: 'Arrival',
           still: 'assets/stills/arrival.jpg',
           clip: 'assets/vid/arrival.mp4',
-          clipMobile: 'assets/vid/mobile_arrival.mp4',
+          clipMobile: 'assets/vid/mobile_arrival_portrait.mp4',
           accent: '#FF2E2E',
           scroll: 1.8, linger: 0.45,
           // The brand mark appears burned into the door itself as it swings open.
@@ -283,6 +277,24 @@
         '<a href="testimonials.html">Testimonials</a>' +
         '<a href="contact.html">Contact</a>';
       topbar.insertBefore(pageNav, sectionNav);
+    })();
+
+    (function () {
+      const menu = document.querySelector('.menu');
+      const images = Array.from(document.querySelectorAll('.menu-bg__img[data-src]'));
+      if (!menu || !images.length) return;
+      const load = () => images.forEach((image) => {
+        image.loading = 'eager';
+        image.src = image.dataset.src;
+        delete image.dataset.src;
+      });
+      if (!('IntersectionObserver' in window)) { load(); return; }
+      const observer = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        load();
+      }, { rootMargin: '1200px 0px' });
+      observer.observe(menu);
     })();
   </script>
   <script src="site.js"></script>

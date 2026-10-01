@@ -28,13 +28,13 @@
        connectors: [clipUrl, …],          // length = sections.length - 1 (nulls allowed)
        connectorsMobile: [clipUrl, …],    // optional lighter connectors for phones (same length)
 
-   MOBILE (the clipMobile/connectorsMobile variants are the opt-in mobile version;
+   MOBILE (the clipMobile/connectorsMobile variants are optional portrait-phone crops;
    the rest of the phone handling below is always on)
      The engine is phone-aware out of the box: on a coarse-pointer / ≤860px viewport it
-       - loads `clipMobile` / `connectorsMobile` when provided (encode these smaller +
-         tighter-GOP - seek cost on a phone decoder is dominated by frames-from-keyframe,
-         so a 720p, -g 4 file scrubs far smoother than the 1080p desktop master; see
-         pipeline.md). Falls back to the desktop `clip` if no mobile variant is given.
+       - uses smaller seek steps and avoids particle animation. On portrait phones with
+         an aspect ratio of 3:5 or narrower it loads `clipMobile` / `connectorsMobile`
+         when provided. Those should be portrait crops at the source's full height, not
+         low-resolution landscape copies. Other screens use the desktop `clip`.
        - uses `stillMobile` as the scene poster when provided (pair it with native 9:16
          clipMobile renders so the poster matches the portrait video's first frame instead
          of flashing from a landscape crop). Chosen once at mount; a desktop resize into
@@ -75,16 +75,15 @@ function mountScrollWorld(container, config) {
   const coarse = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
   const smallMQ = window.matchMedia('(max-width: 860px)');
   const isMobile = () => coarse || smallMQ.matches;
+  const isPhonePortrait = () => window.matchMedia('(orientation: portrait) and (max-aspect-ratio: 3/5)').matches;
   const SECTIONS = config.sections || [];
   const CONNECTORS = config.connectors || [];
   const CONNECTORS_M = config.connectorsMobile || [];
   const DIVE_W = config.diveScroll || 1.3;
   const CONN_W = config.connScroll || 0.9;
   const CROSSFADE = (config.crossfade != null) ? config.crossfade : 0.12;  // seam dissolve width (vh)
-  // Opt-in: fetch every clip immediately at mount instead of waiting until scroll gets
-  // near it. Off by default (a large N-scene chain shouldn't front-load everything), but
-  // worth it for a short film where the total payload is only a few MB - it trades a
-  // slightly heavier initial load for zero fetch-stalls while scrubbing.
+  // Opt-in: attach every clip immediately at mount. Keep this off for long chains; the
+  // normal path attaches metadata for the active and next scene only.
   const EAGER = !!config.eagerLoad;
   // Source resolution + object-position of the encoded clips (see .sw-scene__video's
   // object-position in injectCSS - keep these in sync). doorText/noteOverlay anchors are
@@ -162,11 +161,14 @@ function mountScrollWorld(container, config) {
   [sky, scrollbar, topbar, stage, copylayer, keylayer, route, hint, track].forEach(n => container.appendChild(n));
 
   // segment scenes
-  SEGMENTS.forEach(s => {
+  SEGMENTS.forEach((s, i) => {
     const scene = el('div', 'sw-scene'); scene.style.setProperty('--sw-accent', s.accent || '');
-    const img = el('img', 'sw-scene__still'); img.alt = ''; img.decoding = 'async'; img.loading = 'lazy';
+    const img = el('img', 'sw-scene__still');
+    img.alt = ''; img.decoding = 'async'; img.loading = i === 0 ? 'eager' : 'lazy';
+    img.fetchPriority = i === 0 ? 'high' : 'low';
     const poster = (isMobile() && s.stillM) ? s.stillM : s.still;
-    if (poster) img.src = poster;
+    s.poster = poster || '';
+    s.posterLoaded = false;
     scene.appendChild(img); stage.appendChild(scene);
     s.el = scene; s.img = img; s.video = null; s.hasClip = false;
     s.loading = false; s.ready = false; s.cur = 0; s.target = 0; s.visible = false;
@@ -309,29 +311,34 @@ function mountScrollWorld(container, config) {
     window.scrollTo({ top: seg.start + (seg.end - seg.start) * 0.5, behavior: reduce ? 'auto' : 'smooth' });
   }
 
+  function loadStill(s) {
+    if (!s.poster || s.posterLoaded) return;
+    s.posterLoaded = true;
+    s.img.src = s.poster;
+  }
+
   function loadClip(s) {
     // Under prefers-reduced-motion we never load the clips at all - the stills stay up
     // and simply cross-dissolve as you scroll. No scrubbed video motion, no decode cost.
-    if (reduce || s.loading || !s.clip) return;
+    if (reduce || !s.clip) return;
+    const url = (isPhonePortrait() && s.clipM) ? s.clipM : s.clip;
+    if (s.video && s.video.dataset.sourceUrl === url) return;
+    if (s.video) releaseClip(s);
+    if (s.loading || s.failedUrl === url) return;
     s.loading = true;
-    // Serve the lighter mobile encode on phones when one was provided.
-    const url = (isMobile() && s.clipM) ? s.clipM : s.clip;
-    // Point the <video> straight at the URL instead of fetch()-ing the whole file into
-    // a Blob first. The old blob approach forced every clip to fully download before a
-    // single frame could show - with eagerLoad on, that meant ~25MB in flight on page
-    // load before the FIRST scene was even scrubbable. A host that serves HTTP range
-    // requests (confirmed here: Vercel's static hosting returns 206 Partial Content /
-    // Accept-Ranges: bytes) lets the browser start decoding from just the first
-    // fetched chunk and pull additional byte ranges on demand as currentTime seeks
-    // outside what's buffered - the same mechanism every native <video> scrubber
-    // relies on. Combined with the tight -g 8 keyframe interval the clips are already
-    // encoded with, an out-of-buffer seek only has to fetch back to the nearest
-    // keyframe, not the whole file.
+    // Keep media transfer demand-driven. The poster is shown immediately; metadata is
+    // enough to map scroll progress to time, and currentTime seeks request the needed
+    // byte ranges as the visitor moves through the scene.
     const v = document.createElement('video');
     v.className = 'sw-scene__video';
-    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.muted = true; v.playsInline = true; v.preload = 'metadata';
     v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
-    v.addEventListener('loadedmetadata', () => { s.ready = true; read(); });
+    v.dataset.sourceUrl = url;
+    v.addEventListener('loadedmetadata', () => {
+      if (s.video !== v) return;
+      s.ready = true;
+      read();
+    });
     // Reveal the video (hide the still poster) only once a real frame has
     // painted - on iOS a seeked-but-never-played muted video stays blank, so
     // hiding the still on metadata alone would flash an empty scene. But relying on
@@ -341,15 +348,49 @@ function mountScrollWorld(container, config) {
     // actually moves currentTime and "seeked" never fires - the poster then sits
     // there forever even though the video is fully ready. Forcing one tiny nudge once
     // real frame data exists guarantees an actual seek happens at least once.
-    v.addEventListener('seeked', () => { s.el.classList.add('has-clip'); }, { once: true });
+    v.addEventListener('seeked', () => {
+      if (s.video === v) s.el.classList.add('has-clip');
+    }, { once: true });
     v.addEventListener('loadeddata', () => {
+      if (s.video !== v) return;
       try { v.pause(); } catch (e) {}
-      primeVideo(v);
-      if (v.currentTime < 0.005) { try { v.currentTime = 0.01; } catch (e) {} }
+      activateVideo(s);
     });
-    v.addEventListener('error', () => { s.loading = false; }, { once: true });
+    v.addEventListener('error', () => {
+      if (s.video !== v) return;
+      s.failedUrl = url;
+      s.loading = false;
+      s.ready = false;
+      s.hasClip = false;
+      s.video = null;
+      s.primed = false;
+      s.el.classList.remove('has-clip');
+      v.remove();
+    }, { once: true });
     v.src = url;
     s.el.appendChild(v); s.video = v; s.hasClip = true;
+  }
+
+  function releaseClip(s) {
+    const v = s.video;
+    if (!v) return;
+    s.video = null;
+    s.loading = false;
+    s.ready = false;
+    s.hasClip = false;
+    s.primed = false;
+    s.cur = s.target;
+    s.el.classList.remove('has-clip');
+    try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {}
+    v.remove();
+  }
+
+  function activateVideo(s) {
+    const v = s.video;
+    if (!v || !s.visible || s.primed || v.readyState < 2) return;
+    s.primed = true;
+    primeVideo(v);
+    if (v.currentTime < 0.005) { try { v.currentTime = 0.01; } catch (e) {} }
   }
 
   function read() {
@@ -360,15 +401,13 @@ function mountScrollWorld(container, config) {
 
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
-      // Lookahead margin before a clip's own scroll range - this is what determines
-      // whether a clip has finished buffering by the time you scroll into it. A
-      // staggered version of this used to delay farther-out clips to protect the
-      // active one's bandwidth, but that traded away exactly what actually matters:
-      // getting every clip started as early as possible. Vercel serves over HTTP/2,
-      // which multiplexes concurrent range requests over one connection well enough
-      // that firing all of them immediately beats an artificial delay - the goal is
-      // "everything is already loading", not "one thing loads slightly faster".
-      if (y > s.start - 4 * vh && y < s.end + 1.6 * vh) loadClip(s);
+      // Load posters for the current and next scene so transitions always have a fallback.
+      // Start the next video only after the visitor has moved through half of the current
+      // scene; opening on three short clips at once cost bandwidth without helping the
+      // first viewport.
+      if (i === ci || i === ci + 1) loadStill(s);
+      const currentProgress = clamp((y - SEGMENTS[ci].start) / (SEGMENTS[ci].end - SEGMENTS[ci].start), 0, 1);
+      if (i === ci || (i === ci + 1 && currentProgress >= 0.5)) loadClip(s);
       const local = clamp((y - s.start) / (s.end - s.start), 0, 1);
       s.target = s.linger ? lingerEase(local, s.linger) : local;
       let outside = 0;
@@ -376,6 +415,9 @@ function mountScrollWorld(container, config) {
       const op = smooth(1 - outside / fade);
       s.el.style.opacity = op; s.visible = op > 0.001;
       s.el.style.zIndex = (i === ci) ? '120' : String(100 + Math.round(op * 10));
+      if (s.visible && s.video && s.ready) activateVideo(s);
+      const keepClip = i === ci || i === ci + 1 || (i === ci - 1 && s.visible);
+      if (!keepClip && s.video) releaseClip(s);
       if (!s.hasClip || !s.ready) {
         const sc = reduce ? 1 : 1.03 + local * 0.14;
         s.img.style.transform = `translateX(${stageX - 2}vw) scale(${sc.toFixed(3)})`;
@@ -487,19 +529,17 @@ function mountScrollWorld(container, config) {
     ticking = false;
   }
 
-  // Seeking a <video> is far more expensive than a plain style write (decoder has to
-  // resolve from the nearest keyframe). Writing currentTime on every rAF tick - up to
-  // 120Hz on a high-refresh monitor - is what actually caused the lag; the lerp toward
-  // `target` still runs every frame (cheap), but the seek itself is throttled to a
-  // cadence the eye can't tell apart from 60Hz, roughly halving decode work.
+  // The source clips are 24fps. Cap seeks at that cadence and skip hidden scenes so
+  // the browser does not decode duplicate frames or work on off-screen videos.
   let lastSeekTs = 0;
   function raf(ts) {
     const eps = isMobile() ? 0.02 : 0.008;   // coarser seek step on phones = fewer decodes
-    const seekIntervalMs = isMobile() ? 33 : 22;  // ~30fps mobile / ~45fps desktop seek cadence
+    const seekIntervalMs = 42;  // source footage is 24fps
     const canSeek = !lastSeekTs || (ts - lastSeekTs) >= seekIntervalMs;
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
       if (!s.hasClip || !s.ready || !s.video) continue;
+      if (!s.visible) continue;
       // Never queue a seek while the decoder is still resolving the last one.
       // On phones a fast flick would otherwise pile up seeks and freeze the clip;
       // cur keeps lerping, so we snap to the latest target the moment it's free.
