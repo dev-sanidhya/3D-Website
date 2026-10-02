@@ -1,6 +1,6 @@
 # CH+ Partners website
 
-The site combines a scroll-driven homepage with the studio's service pages and a project-based interior gallery.
+The site combines a scroll-driven homepage with the studio's service pages based on Apple design principle and a project-based interior gallery.
 
 ## Pages and assets
 
