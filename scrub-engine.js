@@ -56,9 +56,9 @@
      --sw-font-display / --sw-font-body
 
    REQUIREMENTS ON YOUR ASSETS
-     - clips encoded native-res, crf~26-28, -g 8, +faststart, no audio (see pipeline.md)
-     - connectors' endpoints are the neighbouring dives' ACTUAL frames (see SKILL Step 5)
-     - (optional) mobile variants at ~720p, -g 4 for smoother phone scrubbing
+     - H.264 clips at the source's native resolution, keyframes at least every 8 frames,
+       faststart metadata, and no audio
+     - portrait-phone crops should keep the source's full native height
    The engine points each clip's <video> straight at its URL and scrubs currentTime -
    it relies on the host serving HTTP range requests (Accept-Ranges: bytes / 206
    Partial Content), which every static host worth using (Vercel included) does. This
@@ -172,6 +172,8 @@ function mountScrollWorld(container, config) {
     scene.appendChild(img); stage.appendChild(scene);
     s.el = scene; s.img = img; s.video = null; s.hasClip = false;
     s.loading = false; s.ready = false; s.cur = 0; s.target = 0; s.visible = false;
+    s.primed = false; s.priming = false; s.revealPending = false; s.revealFrame = null;
+    s.failedSources = new Set(); s.networkRetry = false;
   });
 
   // per-section copy / route / nav
@@ -254,6 +256,7 @@ function mountScrollWorld(container, config) {
     return 0;
   }
   let vh = window.innerHeight, stageX = 0, totalW = 0, activeIndex = -1, ticking = false;
+  let jumpTarget = null;
   let laidOutW = window.innerWidth;   // width the current layout was computed at (see onResize)
   let coverScale = 1, coverOffX = 0, coverOffY = 0;   // object-fit:cover geometry, see layout()
 
@@ -308,8 +311,28 @@ function mountScrollWorld(container, config) {
 
   function jumpTo(i) {
     const seg = SECTIONS[i]._seg;
-    window.scrollTo({ top: seg.start + (seg.end - seg.start) * 0.5, behavior: reduce ? 'auto' : 'smooth' });
+    const top = seg.start + (seg.end - seg.start) * 0.5;
+    const distance = Math.abs(top - (window.scrollY || window.pageYOffset));
+    // A route-button jump can cross several scenes in one smooth scroll. Start the
+    // destination clip now, and keep intermediate clips from competing for bandwidth.
+    jumpTarget = seg;
+    loadStill(seg);
+    loadClip(seg);
+    // Keep nearby navigation smooth, but skip a long cinematic scroll through scenes the
+    // visitor explicitly chose to skip. The target is already loading before this jump.
+    const behavior = reduce ? 'auto' : (distance > vh * 2 ? 'instant' : 'smooth');
+    window.scrollTo({ top: top, behavior: behavior });
   }
+
+  function cancelRouteJump() {
+    jumpTarget = null;
+  }
+
+  window.addEventListener('wheel', cancelRouteJump, { passive: true });
+  window.addEventListener('touchstart', cancelRouteJump, { passive: true });
+  window.addEventListener('keydown', e => {
+    if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(e.key)) cancelRouteJump();
+  }, { passive: true });
 
   function loadStill(s) {
     if (!s.poster || s.posterLoaded) return;
@@ -321,14 +344,14 @@ function mountScrollWorld(container, config) {
     // Under prefers-reduced-motion we never load the clips at all - the stills stay up
     // and simply cross-dissolve as you scroll. No scrubbed video motion, no decode cost.
     if (reduce || !s.clip) return;
-    const url = (isPhonePortrait() && s.clipM) ? s.clipM : s.clip;
+    const mobileUrl = (isPhonePortrait() && s.clipM) ? s.clipM : null;
+    const url = (mobileUrl && !s.failedSources.has(mobileUrl)) ? mobileUrl : s.clip;
     if (s.video && s.video.dataset.sourceUrl === url) return;
     if (s.video) releaseClip(s);
-    if (s.loading || s.failedUrl === url) return;
+    if (s.loading || s.failedSources.has(url)) return;
     s.loading = true;
-    // Keep media transfer demand-driven. The poster is shown immediately; metadata is
-    // enough to map scroll progress to time, and currentTime seeks request the needed
-    // byte ranges as the visitor moves through the scene.
+    // Show the poster while media loads. Fetch metadata only; scrubbing then requests
+    // byte ranges around the current frame instead of downloading an entire clip at once.
     const v = document.createElement('video');
     v.className = 'sw-scene__video';
     v.muted = true; v.playsInline = true; v.preload = 'metadata';
@@ -339,33 +362,54 @@ function mountScrollWorld(container, config) {
       s.ready = true;
       read();
     });
-    // Reveal the video (hide the still poster) only once a real frame has
-    // painted - on iOS a seeked-but-never-played muted video stays blank, so
-    // hiding the still on metadata alone would flash an empty scene. But relying on
-    // "seeked" alone silently breaks for whichever section is active AT PAGE LOAD
-    // (almost always the first one): its scroll target is already ~0, matching a
-    // freshly-loaded video's own currentTime of 0, so raf()'s seek in read() never
-    // actually moves currentTime and "seeked" never fires - the poster then sits
-    // there forever even though the video is fully ready. Forcing one tiny nudge once
-    // real frame data exists guarantees an actual seek happens at least once.
+    // A seek can finish before data for that frame has arrived. Keep the poster until
+    // the browser has current-frame data; otherwise a slow range request exposes a
+    // blank scene (most noticeable when jumping directly to a later clip).
+    const revealDecodedFrame = () => {
+      const tolerance = Math.max(1 / 24, isMobile() ? 0.02 : 0.008);
+      const frameIsCurrent = () => s.video === v && s.primed && !v.seeking &&
+        v.readyState >= 2 &&
+        Math.abs(v.currentTime - clamp(s.target, 0, 0.999) * (v.duration || 1)) <= tolerance;
+      if (!frameIsCurrent() || s.el.classList.contains('has-clip') || s.revealPending) return;
+
+      s.revealPending = true;
+      window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+        s.revealPending = false;
+        if (frameIsCurrent()) s.el.classList.add('has-clip');
+      }));
+    };
+    s.revealFrame = revealDecodedFrame;
     v.addEventListener('seeked', () => {
-      if (s.video === v) s.el.classList.add('has-clip');
-    }, { once: true });
+      if (s.video !== v) return;
+      activateVideo(s);
+      revealDecodedFrame();
+    });
     v.addEventListener('loadeddata', () => {
       if (s.video !== v) return;
-      try { v.pause(); } catch (e) {}
+      s.networkRetry = false;
       activateVideo(s);
+      revealDecodedFrame();
     });
     v.addEventListener('error', () => {
       if (s.video !== v) return;
-      s.failedUrl = url;
-      s.loading = false;
-      s.ready = false;
-      s.hasClip = false;
-      s.video = null;
-      s.primed = false;
-      s.el.classList.remove('has-clip');
-      v.remove();
+      const networkError = v.error && v.error.code === 2;
+      const mobileSourceFailed = url !== s.clip;
+      releaseClip(s);
+      if (mobileSourceFailed) {
+        // A broken portrait encode should not leave the scene stuck on its poster.
+        // Retry the same source scene with the original clip and its native crop.
+        s.failedSources.add(url);
+        if (s.visible) loadClip(s);
+        return;
+      }
+      if (networkError && !s.networkRetry) {
+        s.networkRetry = true;
+        window.setTimeout(() => {
+          if (!s.video && s.visible) loadClip(s);
+        }, 350);
+        return;
+      }
+      s.failedSources.add(url);
     }, { once: true });
     v.src = url;
     s.el.appendChild(v); s.video = v; s.hasClip = true;
@@ -379,6 +423,9 @@ function mountScrollWorld(container, config) {
     s.ready = false;
     s.hasClip = false;
     s.primed = false;
+    s.priming = false;
+    s.revealPending = false;
+    s.revealFrame = null;
     s.cur = s.target;
     s.el.classList.remove('has-clip');
     try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {}
@@ -387,27 +434,37 @@ function mountScrollWorld(container, config) {
 
   function activateVideo(s) {
     const v = s.video;
-    if (!v || !s.visible || s.primed || v.readyState < 2) return;
+    if (!v || !s.visible || v.readyState < 2 || v.seeking) return;
+    const targetTime = clamp(s.target, 0, 0.999) * (v.duration || 1);
+    const tolerance = Math.max(1 / 24, isMobile() ? 0.02 : 0.008);
+    if (Math.abs(v.currentTime - targetTime) > tolerance) {
+      try { v.currentTime = targetTime; } catch (e) {}
+      return;
+    }
+    if (s.primed) {
+      if (s.revealFrame) s.revealFrame();
+      return;
+    }
     s.primed = true;
     primeVideo(v);
-    if (v.currentTime < 0.005) { try { v.currentTime = 0.01; } catch (e) {} }
+    if (s.revealFrame) s.revealFrame();
   }
 
   function read() {
     const y = window.scrollY || window.pageYOffset;
     const fade = CROSSFADE * vh;
+    if (jumpTarget && Math.abs(y - (jumpTarget.start + (jumpTarget.end - jumpTarget.start) * 0.5)) <= Math.max(8, vh * 0.02)) jumpTarget = null;
     let ci = 0;
     for (let i = 0; i < NSEG; i++) if (y >= SEGMENTS[i].start) ci = i;
 
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
       // Load posters for the current and next scene so transitions always have a fallback.
-      // Start the next video only after the visitor has moved through half of the current
-      // scene; opening on three short clips at once cost bandwidth without helping the
-      // first viewport.
-      if (i === ci || i === ci + 1) loadStill(s);
+      // Warm only the next clip's metadata before its scene so the first viewport does
+      // not compete with several full video downloads.
+      if (i === ci || i === ci + 1 || s === jumpTarget) loadStill(s);
       const currentProgress = clamp((y - SEGMENTS[ci].start) / (SEGMENTS[ci].end - SEGMENTS[ci].start), 0, 1);
-      if (i === ci || (i === ci + 1 && currentProgress >= 0.5)) loadClip(s);
+      if (s === jumpTarget || (!jumpTarget && (i === ci || (i === ci + 1 && currentProgress >= 0.3)))) loadClip(s);
       const local = clamp((y - s.start) / (s.end - s.start), 0, 1);
       s.target = s.linger ? lingerEase(local, s.linger) : local;
       let outside = 0;
@@ -416,7 +473,7 @@ function mountScrollWorld(container, config) {
       s.el.style.opacity = op; s.visible = op > 0.001;
       s.el.style.zIndex = (i === ci) ? '120' : String(100 + Math.round(op * 10));
       if (s.visible && s.video && s.ready) activateVideo(s);
-      const keepClip = i === ci || i === ci + 1 || (i === ci - 1 && s.visible);
+      const keepClip = s === jumpTarget || i === ci || i === ci + 1 || (i === ci - 1 && s.visible);
       if (!keepClip && s.video) releaseClip(s);
       if (!s.hasClip || !s.ready) {
         const sc = reduce ? 1 : 1.03 + local * 0.14;
@@ -538,14 +595,12 @@ function mountScrollWorld(container, config) {
     const canSeek = !lastSeekTs || (ts - lastSeekTs) >= seekIntervalMs;
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
-      if (!s.hasClip || !s.ready || !s.video) continue;
+      if (!s.hasClip || !s.ready || !s.video || !s.primed || s.priming) continue;
       if (!s.visible) continue;
-      // Never queue a seek while the decoder is still resolving the last one.
-      // On phones a fast flick would otherwise pile up seeks and freeze the clip;
-      // cur keeps lerping, so we snap to the latest target the moment it's free.
+      // Never queue a seek while the decoder is still resolving the last one. Once it is
+      // free, apply the latest scroll target directly instead of chasing stale positions.
+      s.cur = s.target;
       if (s.video.seeking) continue;
-      if (!s.visible && Math.abs(s.cur - s.target) < 0.002) continue;
-      s.cur += (s.target - s.cur) * (reduce ? 1 : 0.18);
       if (!canSeek) continue;
       const dur = s.video.duration || 1;
       const t = clamp(s.cur, 0, 0.999) * dur;
@@ -575,7 +630,7 @@ function mountScrollWorld(container, config) {
   function onFirstGesture() {
     if (userReady) return;
     userReady = true;
-    SEGMENTS.forEach(s => primeVideo(s.video));
+    SEGMENTS.forEach(s => { if (s.visible) activateVideo(s); });
   }
   window.addEventListener('pointerdown', onFirstGesture, { once: true, passive: true });
   window.addEventListener('touchstart', onFirstGesture, { once: true, passive: true });
@@ -596,7 +651,7 @@ function mountScrollWorld(container, config) {
   window.addEventListener('orientationchange', layout);
   window.addEventListener('load', layout);
   layout();
-  if (EAGER && !reduce) SEGMENTS.forEach(loadClip);
+  if (EAGER && !reduce) SEGMENTS.forEach(s => loadClip(s));
   requestAnimationFrame(raf);
 
   // ---- helpers ----

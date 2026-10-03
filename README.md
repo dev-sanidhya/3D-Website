@@ -19,14 +19,14 @@ python -m pip install Pillow
 python optimize_gallery_images.py
 ```
 
-Add each photo to the appropriate project's `photos` array in `gallery-data.js` with its original pixel dimensions and a useful alt description. Add new projects there with a unique `id`, a `coverId`, descriptive title and copy, and an ordered photo list. Project titles currently describe the two supplied image sets; replace them with the studio's official names when available.
+Add each photo to the appropriate project's `photos` array in `gallery-data.js` with its original pixel dimensions and a useful alt description. Add a project there with a unique `id`, a `coverId`, description, and ordered photo list. The current 33 supplied JPGs have generic filenames and no official project metadata. They are grouped into three numbered albums by their continuous source sequence and visual content; the numbers are neutral labels, not the studio's official project names. Replace the neutral labels after the studio maps the photos to its named projects.
 
 ## Local preview
 
-Run a static server from this directory, for example:
+Run the range-capable preview server from this directory:
 
 ```bash
-python -m http.server 8123
+python preview_server.py --port 8123
 ```
 
-Then open `http://localhost:8123`. Python's simple server does not support byte-range requests for MP4 files, so use a range-capable server when measuring video transfer or seeking performance.
+Then open `http://localhost:8123`. The server supports HTTP byte ranges for MP4 files so scroll scrubbing behaves like it does on the production static host.
