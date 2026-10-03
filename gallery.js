@@ -68,7 +68,7 @@
 
       var overlay = element('span', 'project-card__overlay');
       var copy = element('span', 'project-card__copy');
-      copy.appendChild(element('span', 'project-card__number', 'PROJECT ' + String(index + 1).padStart(2, '0')));
+      copy.appendChild(element('span', 'project-card__number', 'ALBUM ' + String(index + 1).padStart(2, '0')));
       copy.appendChild(element('span', 'project-card__title', project.albumTitle || project.title));
       overlay.appendChild(copy);
       overlay.appendChild(element('span', 'project-card__photos', project.photos.length + ' photographs'));
@@ -146,7 +146,7 @@
 
     detailTitle.textContent = project.albumTitle || project.title;
     document.getElementById('project-detail-description').textContent = project.description;
-    document.getElementById('project-detail-index').textContent = 'PROJECT  ·  ' + String(projects.indexOf(project) + 1).padStart(2, '0') + ' / ' + String(projects.length).padStart(2, '0');
+    document.getElementById('project-detail-index').textContent = 'ALBUM  ·  ' + String(projects.indexOf(project) + 1).padStart(2, '0') + ' / ' + String(projects.length).padStart(2, '0');
     document.getElementById('project-album-title').textContent = project.albumTitle || 'Selected views';
     document.getElementById('project-photo-count').textContent = String(project.photos.length).padStart(2, '0') + ' PHOTOGRAPHS';
     detailCover.src = cover.full;
