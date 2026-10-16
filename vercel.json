@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    { "source": "/gallery.html", "destination": "/work.html", "permanent": true },
+    { "source": "/projects.html", "destination": "/work.html", "permanent": true },
+    { "source": "/about.html", "destination": "/#studio", "permanent": true },
+    { "source": "/services.html", "destination": "/#practice", "permanent": true },
+    { "source": "/testimonials.html", "destination": "/", "permanent": true },
+    { "source": "/contact.html", "destination": "/#contact", "permanent": true },
+    { "source": "/privacy.html", "destination": "/", "permanent": false },
+    { "source": "/terms.html", "destination": "/", "permanent": false }
+  ],
+  "headers": [
+    { "source": "/assets/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }
+  ]
+}

@@ -1,11 +1,6 @@
-.vercel
-
-# Local agent context
+.claude/
 CLAUDE.md
-AGENTS.md
 MEMORY.md
 ERRORS.md
-SESSION_NOTES.md
-.claude/
-.agents/
-.playwright-cli/
+AGENTS.md
+.DS_Store

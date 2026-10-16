@@ -3,300 +3,202 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ch+partners - Brilliant design. Simplicity at scale.</title>
-  <meta name="description" content="A six-year practice in architecture and interiors from Gachibowli, Hyderabad. Scroll to watch a home rise from bare plot to finished villa." />
-  <link rel="preload" as="image" href="assets/stills/plot.jpg" fetchpriority="high" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23050505'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='20' font-weight='700' fill='%23FFFFFF' text-anchor='middle'%3E+%3C/text%3E%3Ccircle cx='26' cy='7' r='3' fill='%23FF2E2E'/%3E%3C/svg%3E" />
+  <title>ch+partners · Architecture, structural engineering and interiors, Hyderabad</title>
+  <meta name="description" content="ch+partners is an architecture, structural engineering and interiors studio in Gachibowli, Hyderabad, founded in 2018 by Chandu S R Krishna." />
+  <meta name="theme-color" content="#100e0b" />
+  <meta property="og:title" content="ch+partners" />
+  <meta property="og:description" content="Architecture, structural engineering and interiors. Gachibowli, Hyderabad, since 2018." />
+  <meta property="og:image" content="assets/og.jpg" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@200;300;400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Silkscreen:wght@400;700&family=Fraunces:opsz,wght@9..144,600..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-  <link rel="stylesheet" href="site.css" />
-  <style>
-    :root, .sw-root {
-      --sw-bg: #050505;
-      --sw-ink: #FFFFFF;
-      --sw-ink-soft: #7A7A7A;
-      --sw-accent: #FF2E2E;
-      --sw-font-display: 'Hanken Grotesk', sans-serif;
-      --sw-font-body: 'Inter', sans-serif;
-      --sw-font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
-      --sw-font-dot: 'Silkscreen', monospace;
-      /* The door-burned wordmark gets its own register - a heavy serif instead of the
-         site's grotesk, and a warm brass tone instead of the site's red - so it reads as
-         a premium inscribed mark, not just another UI label. */
-      --sw-font-mark: 'Fraunces', Georgia, serif;
-      --sw-mark-color-1: #8A6218;
-      --sw-mark-color-2: #F2D98A;
-    }
-    html, body { margin: 0; background: #050505; }
-    /* Small site-page nav, inserted into the engine's fixed topbar after mount (see
-       script below) - sits between the brand mark and the section-jump pills so the
-       cinematic page still links to the rest of the site. Flat, tiny, tracked mono
-       caps with no pill fill - matches nothing.tech's actual nav chrome. */
-    .page-nav { display: flex; gap: 16px; }
-    .page-nav a {
-      font-family: var(--sw-font-mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .04em;
-      text-decoration: none; color: color-mix(in srgb, var(--sw-ink) 62%, transparent); padding: 4px 0;
-      border-radius: 0; transition: color .2s;
-    }
-    .page-nav a:hover { color: var(--sw-ink); background: transparent; }
-    @media (max-width: 900px) { .page-nav { display: none; } }
-
-    /* The fancy "menu" landing that follows the cinematic - a full-screen destination
-       index. Hovering a row cross-fades a background photo behind the whole section via
-       :has(), no JS required. This is where the visit actually "lands" once the
-       walkthrough ends, before it hands off to the rest of the site. */
-    .menu { position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; }
-    .menu-bg { position: absolute; inset: 0; z-index: 0; }
-    .menu-bg::after { content: ''; position: absolute; inset: 0; background: #0A0A0A; opacity: .86; }
-    .menu-bg__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .8s ease; }
-    .menu-bg__img.is-default { opacity: .32; }
-    .menu:has(.menu-item[data-target="about"]:hover) .menu-bg__img.is-default,
-    .menu:has(.menu-item[data-target="services"]:hover) .menu-bg__img.is-default,
-    .menu:has(.menu-item[data-target="projects"]:hover) .menu-bg__img.is-default,
-    .menu:has(.menu-item[data-target="contact"]:hover) .menu-bg__img.is-default { opacity: 0; }
-    .menu:has(.menu-item[data-target="about"]:hover) .menu-bg__img[data-for="about"],
-    .menu:has(.menu-item[data-target="services"]:hover) .menu-bg__img[data-for="services"],
-    .menu:has(.menu-item[data-target="projects"]:hover) .menu-bg__img[data-for="projects"],
-    .menu:has(.menu-item[data-target="contact"]:hover) .menu-bg__img[data-for="contact"] { opacity: .45; }
-    /* Extra top clearance so the eyebrow/headline never render under the fixed topbar -
-       min-height:100vh + centered content means a tall menu can push its first line up
-       near the viewport top, which is exactly where the topbar always sits. */
-    .menu-fg { position: relative; z-index: 1; width: 100%; padding: clamp(110px, 16vh, 160px) 0 clamp(64px, 10vh, 120px); }
-    .menu-list { margin-top: 44px; border-top: 1px solid color-mix(in srgb, var(--sw-ink) 16%, transparent); }
-    .menu-item {
-      display: flex; align-items: baseline; gap: clamp(16px, 4vw, 40px); text-decoration: none; color: var(--sw-ink);
-      padding: clamp(18px, 3.4vh, 32px) 4px; border-bottom: 1px solid color-mix(in srgb, var(--sw-ink) 16%, transparent);
-      transition: padding-left .35s cubic-bezier(.16,1,.3,1);
-    }
-    .menu-item:hover { padding-left: 18px; }
-    .menu-item__num { font-family: var(--sw-font-mono); font-size: .8rem; color: var(--sw-ink-soft); flex: none; white-space: nowrap; }
-    .menu-item__num::before { content: '( '; } .menu-item__num::after { content: ' )'; }
-    .menu-item__title { font-family: var(--sw-font-display); font-weight: 500; font-size: clamp(1.8rem, 5vw, 3.4rem); flex: 1 1 auto; letter-spacing: -.02em; }
-    .menu-item__meta { font-size: .85rem; color: var(--sw-ink-soft); flex: none; max-width: 26ch; text-align: right; }
-    .menu-item__arrow { flex: none; font-size: 1.4rem; opacity: 0; transform: translateX(-8px); transition: opacity .3s, transform .3s; }
-    .menu-item:hover .menu-item__arrow { opacity: 1; transform: none; }
-    @media (max-width: 700px) {
-      .menu-item { flex-wrap: wrap; }
-      .menu-item__meta { display: none; }
-      .menu-item__title { font-size: clamp(1.6rem, 8vw, 2.2rem); }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="preload" as="image" href="assets/fly/poster.webp" fetchpriority="high" />
+  <link rel="stylesheet" href="css/site.css" />
 </head>
 <body>
-  <div id="top"></div>
-  <div id="world"></div>
+  <a class="skip" href="#studio">Skip the film</a>
+
+  <header class="site-header" data-header>
+    <div class="wrap">
+      <a class="wordmark" href="./" aria-label="ch+partners home">ch<span class="plus">+</span>partners</a>
+      <nav class="nav" aria-label="Main">
+        <a href="#practice" class="hide-sm">Practice</a>
+        <a href="work.html">Work</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
 
   <main>
-    <section class="menu">
-      <div class="menu-bg" aria-hidden="true">
-        <!-- These are attached when the section approaches the viewport so they do not
-             compete with the opening posters and video for bandwidth. -->
-        <img class="menu-bg__img is-default" data-src="assets/stills/menu-default.jpg" alt="" loading="lazy" />
-        <img class="menu-bg__img" data-for="about" data-src="assets/stills/menu-about.jpg" alt="" loading="lazy" />
-        <img class="menu-bg__img" data-for="services" data-src="assets/stills/menu-services.jpg" alt="" loading="lazy" />
-        <img class="menu-bg__img" data-for="projects" data-src="assets/stills/menu-projects.jpg" alt="" loading="lazy" />
-        <img class="menu-bg__img" data-for="contact" data-src="assets/stills/menu-contact.jpg" alt="" loading="lazy" />
-      </div>
-      <div class="menu-fg page reveal">
-        <span class="eyebrow">You've seen it come together</span>
-        <h2 class="headline headline--lg" data-words>Where to next?</h2>
-        <nav class="menu-list" aria-label="Explore the studio">
-          <a class="menu-item" href="about.html" data-target="about">
-            <span class="menu-item__num">01</span>
-            <span class="menu-item__title">Meet CH</span>
-            <span class="menu-item__meta">Founder, est. 2018</span>
-            <span class="menu-item__arrow">→</span>
-          </a>
-          <a class="menu-item" href="services.html" data-target="services">
-            <span class="menu-item__num">02</span>
-            <span class="menu-item__title">What We Do</span>
-            <span class="menu-item__meta">Architecture, engineering, interiors</span>
-            <span class="menu-item__arrow">→</span>
-          </a>
-          <a class="menu-item" href="projects.html" data-target="projects">
-            <span class="menu-item__num">03</span>
-            <span class="menu-item__title">Selected Work</span>
-            <span class="menu-item__meta">Twelve homes across Hyderabad</span>
-            <span class="menu-item__arrow">→</span>
-          </a>
-          <a class="menu-item" href="testimonials.html" data-target="testimonials">
-            <span class="menu-item__num">04</span>
-            <span class="menu-item__title">Testimonials</span>
-            <span class="menu-item__meta">What clients say</span>
-            <span class="menu-item__arrow">→</span>
-          </a>
-          <a class="menu-item" href="contact.html" data-target="contact">
-            <span class="menu-item__num">05</span>
-            <span class="menu-item__title">Get In Touch</span>
-            <span class="menu-item__meta">Book a consultation</span>
-            <span class="menu-item__arrow">→</span>
-          </a>
-        </nav>
+    <section class="film" data-film data-theme="dark" aria-label="A house from empty plot to finished home">
+      <div class="film-stage">
+        <img class="film-poster" src="assets/fly/poster.webp" alt="" />
+        <canvas class="film-canvas" aria-hidden="true"></canvas>
+        <div class="film-scrim"></div>
+        <div class="film-fade"></div>
+        <div class="film-loader" aria-hidden="true"></div>
+
+        <div class="film-copy">
+          <div class="wrap">
+            <div class="film-intro" data-step="intro">
+              <h1>ch<span class="plus">+</span>partners</h1>
+              <p>Architecture, structural engineering and interiors. Gachibowli, Hyderabad, since 2018.</p>
+            </div>
+            <div class="film-step"><span class="num">01 / 04</span><div><h2>Site</h2><p>The plot is surveyed and the footprint marked out.</p></div></div>
+            <div class="film-step"><span class="num">02 / 04</span><div><h2>Structure</h2><p>Foundations, columns, slabs and walls.</p></div></div>
+            <div class="film-step"><span class="num">03 / 04</span><div><h2>Finish</h2><p>Stone, timber, glazing and landscape.</p></div></div>
+            <div class="film-step"><span class="num">04 / 04</span><div><h2>Home</h2><p>Through the front door and into the house.</p></div></div>
+          </div>
+        </div>
+
+        <div class="film-hint" data-hint>Scroll</div>
+        <div class="film-progress" aria-hidden="true"><i></i></div>
       </div>
     </section>
 
-    <section class="page section--tight section--border-top reveal">
-      <blockquote class="quote" style="padding-left:22px;max-width:52ch;">
-        <p>"Finally I got best interior in hyderabad.. don't think more just go for him"</p>
-        <cite>ahamad khan</cite>
-      </blockquote>
+    <section class="statement" id="studio" data-theme="dark">
+      <div class="wrap">
+        <span class="eyebrow reveal">The studio</span>
+        <h2 class="reveal d1">One studio for the architecture, the structure and the interiors of a home, <em>start to finish.</em></h2>
+        <dl class="facts reveal d2">
+          <div><dt>Founded</dt><dd>2018</dd></div>
+          <div><dt>Founder</dt><dd>Chandu S R Krishna</dd></div>
+          <div><dt>Studio</dt><dd>Gachibowli, Hyderabad</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="practice" id="practice" data-theme="light" aria-labelledby="practice-title">
+      <div class="practice-grid">
+        <div class="practice-media" data-practice-media>
+          <img src="assets/stills/villa.webp" alt="" class="is-on" />
+          <img src="assets/stills/structure.webp" alt="" loading="lazy" />
+          <img src="assets/stills/door.webp" alt="" loading="lazy" />
+          <img src="assets/stills/living.webp" alt="" loading="lazy" />
+        </div>
+
+        <div class="practice-list">
+          <div class="practice-head">
+            <span class="eyebrow reveal">Practice</span>
+            <h2 class="reveal d1" id="practice-title">Four disciplines under one roof.</h2>
+          </div>
+
+          <article class="discipline" data-discipline="0">
+            <img class="discipline-img" src="assets/stills/villa-s.webp" alt="" loading="lazy" />
+            <span class="n">01</span>
+            <h3>Architecture</h3>
+            <p>Planning and design for independent homes, villas and apartments.</p>
+          </article>
+
+          <article class="discipline" data-discipline="1">
+            <img class="discipline-img" src="assets/stills/structure-s.webp" alt="" loading="lazy" />
+            <span class="n">02</span>
+            <h3>Structural engineering</h3>
+            <p>Structural design worked out alongside the architecture, so the frame and the plan agree.</p>
+          </article>
+
+          <article class="discipline" data-discipline="2">
+            <img class="discipline-img" src="assets/stills/door-s.webp" alt="" loading="lazy" />
+            <span class="n">03</span>
+            <h3>Interiors</h3>
+            <p>Residential and commercial interiors, room by room.</p>
+            <ul>
+              <li>Kitchens</li>
+              <li>Wardrobes and joinery</li>
+              <li>Flooring</li>
+              <li>Wall decor</li>
+              <li>Furniture and furnishings</li>
+              <li>Home theatre</li>
+            </ul>
+          </article>
+
+          <article class="discipline" data-discipline="3">
+            <img class="discipline-img" src="assets/stills/living-s.webp" alt="" loading="lazy" />
+            <span class="n">04</span>
+            <h3>Sustainability</h3>
+            <p>Planned in from the first drawing.</p>
+            <ul>
+              <li>Solar installation</li>
+              <li>Landscaping</li>
+              <li>CCTV</li>
+              <li>Cleaning and pest control</li>
+            </ul>
+          </article>
+          <div class="practice-tail"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="places" data-theme="dark" aria-labelledby="places-title">
+      <div class="wrap places-head">
+        <div>
+          <span class="eyebrow reveal">Where we have worked</span>
+          <h2 class="reveal d1" id="places-title">Twelve communities across Hyderabad.</h2>
+        </div>
+      </div>
+      <div class="marquee-row" aria-hidden="true">
+        <div class="marquee">
+          <ul><li>Devisthana Homes</li><li>Lansum Etania</li><li>Aparna Serene Park</li><li>Aparna Cyberzone</li><li>Aparna Zenith</li><li>Rajapushpa Greendale</li></ul>
+          <ul><li>Devisthana Homes</li><li>Lansum Etania</li><li>Aparna Serene Park</li><li>Aparna Cyberzone</li><li>Aparna Zenith</li><li>Rajapushpa Greendale</li></ul>
+        </div>
+      </div>
+      <div class="marquee-row rev" aria-hidden="true">
+        <div class="marquee">
+          <ul><li>Rajapushpa Retreat</li><li>NCC Gardenia</li><li>Countryside Villas</li><li>Subishi Mist Luxury Homes</li><li>Abode MJ Lake View</li><li>Mayfair Apartments</li></ul>
+          <ul><li>Rajapushpa Retreat</li><li>NCC Gardenia</li><li>Countryside Villas</li><li>Subishi Mist Luxury Homes</li><li>Abode MJ Lake View</li><li>Mayfair Apartments</li></ul>
+        </div>
+      </div>
+      <ul class="sr-only">
+        <li>Devisthana Homes</li><li>Lansum Etania</li><li>Aparna Serene Park</li><li>Aparna Cyberzone</li><li>Aparna Zenith</li><li>Rajapushpa Greendale</li>
+        <li>Rajapushpa Retreat</li><li>NCC Gardenia</li><li>Countryside Villas</li><li>Subishi Mist Luxury Homes</li><li>Abode MJ Lake View</li><li>Mayfair Apartments</li>
+      </ul>
+    </section>
+
+    <section class="voice" data-theme="light" aria-label="Client review">
+      <div class="wrap">
+        <figure>
+          <span class="eyebrow reveal">From a Google review</span>
+          <blockquote class="reveal d1"><span class="q">“</span>Finally I got best interior in hyderabad.. don’t think more just go for him<span class="q">”</span></blockquote>
+          <figcaption class="reveal d2"><strong>Ahamad Khan</strong><span class="stars" aria-label="Five stars">★★★★★</span></figcaption>
+        </figure>
+        <p class="more reveal">Also rated five stars by Raghavendra Penagamuri, for kitchen and living room design, and Manish Vishwakarma, for professionalism, quality and value.</p>
+      </div>
+    </section>
+
+    <a class="work-link" href="work.html" data-theme="dark">
+      <div class="wrap">
+        <span class="t">Previous work</span>
+        <span class="meta"><span>33 photographs</span>
+          <span class="arrow"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.3" /></svg></span>
+        </span>
+      </div>
+    </a>
+
+    <section class="contact" id="contact" data-theme="dark" aria-labelledby="contact-title">
+      <div class="contact-bg"><img src="assets/stills/door.webp" alt="" loading="lazy" /></div>
+      <div class="wrap">
+        <span class="eyebrow reveal">Contact</span>
+        <h2 class="reveal d1" id="contact-title">Start with a <em>conversation.</em></h2>
+        <a class="cta-pill reveal d2" href="https://wa.me/919908916178" target="_blank" rel="noopener">WhatsApp the studio
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.4" /></svg>
+        </a>
+        <dl class="contact-row reveal">
+          <div><dt>Phone</dt><dd><a href="tel:+919908916178">+91 99089 16178</a></dd></div>
+          <div><dt>Email</dt><dd><a href="mailto:chpluspartners@gmail.com">chpluspartners@gmail.com</a></dd></div>
+          <div><dt>Studio</dt><dd>8th floor, SLN Terminus<br />Jayabheri Enclave, Gachibowli<br />Hyderabad 500032</dd></div>
+          <div><dt>Directions</dt><dd><a href="https://www.google.com/maps/search/?api=1&amp;query=SLN+Terminus+Gachibowli+Hyderabad" target="_blank" rel="noopener">Open in Google Maps</a></dd></div>
+        </dl>
+        <footer class="site-footer">
+          <span>ch+partners</span>
+          <span>Architecture, structural engineering and interiors</span>
+          <span>© <span data-year>2026</span> Hyderabad</span>
+        </footer>
+      </div>
     </section>
   </main>
 
-  <footer class="footer">
-    <div class="page">
-      <div class="footer__grid">
-        <div>
-          <div class="footer__label">ch+partners</div>
-          <p class="lede" style="margin-top:0;max-width:36ch;">Architecture, engineering and interiors, from
-            Gachibowli - est. 2018.</p>
-        </div>
-        <div>
-          <div class="footer__label">Site</div>
-          <ul class="footer__links">
-            <li><a href="about.html">About</a></li>
-            <li><a href="services.html">Services</a></li>
-            <li><a href="projects.html">Projects</a></li>
-            <li><a href="gallery.html">Gallery</a></li>
-            <li><a href="testimonials.html">Testimonials</a></li>
-            <li><a href="contact.html">Contact</a></li>
-          </ul>
-        </div>
-        <div>
-          <div class="footer__label">Contact</div>
-          <ul class="footer__links">
-            <li><a href="mailto:chpluspartners@gmail.com">chpluspartners@gmail.com</a></li>
-            <li><a href="https://wa.me/919908916178">+91 99089 16178</a></li>
-            <li>8th floor, SLN Terminus, Jayabheri Enclave, Gachibowli, Hyderabad</li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer__bottom">
-        <span>© <span id="year"></span> ch+partners</span>
-        <span>Gachibowli, Hyderabad, Telangana 500032</span>
-        <span><a href="privacy.html" style="color:inherit;">Privacy Policy</a> · <a href="terms.html" style="color:inherit;">Terms and Conditions</a></span>
-      </div>
-    </div>
-  </footer>
-
-  <script src="scrub-engine.js"></script>
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-    mountScrollWorld(document.getElementById('world'), {
-      brand: { name: 'ch+partners', href: '#top' },
-      cta: { label: 'Get in touch', href: '#' },
-      hint: 'scroll to begin',
-      diveScroll: 1.3,
-      connScroll: 0.9,
-      // The engine loads the current scene video first and warms the next one at 30%
-      // through the current scene. The first poster is preloaded above for immediate paint.
-      eagerLoad: false,
-      sections: [
-        {
-          id: 'plot', label: 'The Plot',
-          still: 'assets/stills/plot.jpg',
-          clip: 'assets/vid/plot.mp4',
-          clipMobile: 'assets/vid/mobile_plot_portrait.mp4',
-          accent: '#FF2E2E',
-          scroll: 1.5, linger: 0.3,
-          eyebrow: 'Before anything else',
-          title: 'Every house starts as a promise on paper.',
-          tags: ['Site survey', 'Foundation layout'],
-        },
-        {
-          id: 'structure', label: 'The Structure',
-          still: 'assets/stills/structure.jpg',
-          clip: 'assets/vid/structure.mp4',
-          clipMobile: 'assets/vid/mobile_structure_portrait.mp4',
-          accent: '#FF2E2E',
-          // This is the mid-stage of the build and previously had zero linger while
-          // its neighbours all did - the camera raced through it. A touch more scroll
-          // distance plus a moderate linger (settles mid-scene, still moves briskly at
-          // the seams) gives the eye time to read the structural copy/quote without
-          // slowing the whole clip uniformly or feeling sluggish.
-          scroll: 1.65, linger: 0.32,
-          eyebrow: 'Weeks of pouring, curing, rising',
-          // The heading now carries the meaning on its own - no body paragraph or quote
-          // block competing with it over the footage. Both used to render nearly
-          // heading-sized, hard to read over the light concrete/dust background, and
-          // just repeated what this title already says.
-          title: 'Columns, beams, rebar - the skeleton first.',
-          tags: ['Reinforced concrete', 'Load-bearing frame'],
-        },
-        {
-          id: 'complete', label: 'The Villa',
-          still: 'assets/stills/complete.jpg',
-          clip: 'assets/vid/complete.mp4',
-          clipMobile: 'assets/vid/mobile_complete_portrait.mp4',
-          accent: '#FF2E2E',
-          scroll: 1.7, linger: 0.4,
-          eyebrow: 'Months later',
-          title: 'From bare earth to a finished home.',
-          tags: ['Stone & glass facade', 'Landscaped grounds'],
-        },
-        {
-          id: 'arrival', label: 'Arrival',
-          still: 'assets/stills/arrival.jpg',
-          clip: 'assets/vid/arrival.mp4',
-          clipMobile: 'assets/vid/mobile_arrival_portrait.mp4',
-          accent: '#FF2E2E',
-          scroll: 1.8, linger: 0.45,
-          // The brand mark appears burned into the door itself as it swings open.
-          // In this 10s clip the door starts cracking ~t=4.8s and is fully open by
-          // ~t=6s (confirmed by frame-stepping the source footage). The hold window is
-          // widened well past that physical swing (0.42-0.78, ~3.6s) so the mark lingers
-          // through the doorway crossing instead of clearing the instant the door settles.
-          // x/y are fractions of the 1280x720 source frame - mapped through the same
-          // object-fit:cover math as the video itself (see srcToScreen in scrub-engine.js).
-          doorText: { text: 'ch+partners', from: 0.42, to: 0.78, x: 0.50, y: 0.40, srcFontPx: 115, zoom: 0.22 },
-          eyebrow: 'Est. 2018 - Gachibowli, Hyderabad',
-          title: 'Brilliant design. Simplicity at scale.',
-          body: 'Architecture, engineering, interiors - one studio, led by Chandu S R Krishna.',
-          tags: ['Teak entry door', 'Private courtyard pool'],
-        },
-      ],
-      connectors: [],
-    });
-
-    // Insert real site navigation into the engine's topbar, between the brand mark and
-    // the section-jump pills - mountScrollWorld only knows about this page's own scroll
-    // sections, not the rest of the site, so this is wired in separately rather than
-    // touching scrub-engine.js (which stays a page-agnostic, reusable engine).
-    (function () {
-      const topbar = document.querySelector('.sw-topbar');
-      const sectionNav = document.querySelector('.sw-nav');
-      if (!topbar || !sectionNav) return;
-      const pageNav = document.createElement('nav');
-      pageNav.className = 'page-nav';
-      pageNav.innerHTML =
-        '<a href="about.html">About</a>' +
-        '<a href="services.html">Services</a>' +
-        '<a href="projects.html">Projects</a>' +
-        '<a href="gallery.html">Gallery</a>' +
-        '<a href="testimonials.html">Testimonials</a>' +
-        '<a href="contact.html">Contact</a>';
-      topbar.insertBefore(pageNav, sectionNav);
-    })();
-
-    (function () {
-      const menu = document.querySelector('.menu');
-      const images = Array.from(document.querySelectorAll('.menu-bg__img[data-src]'));
-      if (!menu || !images.length) return;
-      const load = () => images.forEach((image) => {
-        image.loading = 'eager';
-        image.src = image.dataset.src;
-        delete image.dataset.src;
-      });
-      if (!('IntersectionObserver' in window)) { load(); return; }
-      const observer = new IntersectionObserver((entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return;
-        observer.disconnect();
-        load();
-      }, { rootMargin: '1200px 0px' });
-      observer.observe(menu);
-    })();
-  </script>
-  <script src="site.js"></script>
+  <script src="js/flythrough.js" defer></script>
+  <script src="js/site.js" defer></script>
 </body>
 </html>
