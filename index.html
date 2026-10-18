@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
-  <link rel="preload" as="image" href="assets/fly/poster.webp" fetchpriority="high" />
+  <link rel="preload" as="image" href="assets/stills/villa.webp" fetchpriority="high" />
   <link rel="stylesheet" href="css/site.css" />
 </head>
 <body>
@@ -31,7 +31,43 @@
   </header>
 
   <main>
-    <section class="film" data-film data-theme="dark" aria-label="A house from empty plot to finished home">
+    <section class="hero" data-hero data-theme="dark" aria-label="Welcome to ch+partners">
+      <div class="hero-stage">
+        <div class="hero-bg" data-hero-stack aria-hidden="true">
+          <img src="assets/stills/villa.webp" alt="" class="is-on" fetchpriority="high" />
+          <img src="assets/stills/door.webp" alt="" />
+          <img src="assets/stills/living.webp" alt="" />
+        </div>
+        <div class="hero-lens" data-hero-stack data-hero-lens aria-hidden="true">
+          <img src="assets/stills/villa.webp" alt="" class="is-on" />
+          <img src="assets/stills/door.webp" alt="" />
+          <img src="assets/stills/living.webp" alt="" />
+        </div>
+        <div class="hero-scrim"></div>
+        <div class="hero-ring" data-hero-ring aria-hidden="true"><span>ch+</span></div>
+
+        <div class="hero-copy" data-hero-copy>
+          <div class="wrap">
+            <span class="eyebrow hero-in" style="--i:0">Welcome to</span>
+            <h1 aria-label="ch+partners"><span class="hero-in" style="--i:1" aria-hidden="true">ch</span><span class="hero-in plus" style="--i:2" aria-hidden="true">+</span><span class="hero-in" style="--i:3" aria-hidden="true">partners</span></h1>
+            <div class="hero-row hero-in" style="--i:5">
+              <p class="hero-line">We <span class="roll" aria-hidden="true"><b>design homes.</b><b>engineer structures.</b><b>finish interiors.</b><b>design homes.</b></span><span class="sr-only">design homes, engineer structures and finish interiors.</span></p>
+              <p class="hero-sub">Architecture, structural engineering and interiors. Gachibowli, Hyderabad, since 2018.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-foot hero-in" style="--i:7">
+          <div class="wrap">
+            <span class="hero-cap"><span data-hero-num>01 / 03</span><span data-hero-cap>The villa, finished</span></span>
+            <span class="hero-tip" data-hero-tip>Move to reveal. Hold to open up.</span>
+            <a class="hero-cue" href="#film">Scroll to watch a home get built<i></i></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="film" id="film" data-film data-theme="dark" aria-label="A house from empty plot to finished home">
       <div class="film-stage">
         <img class="film-poster" src="assets/fly/poster.webp" alt="" />
         <canvas class="film-canvas" aria-hidden="true"></canvas>
@@ -42,8 +78,8 @@
         <div class="film-copy">
           <div class="wrap">
             <div class="film-intro" data-step="intro">
-              <h1>ch<span class="plus">+</span>partners</h1>
-              <p>Architecture, structural engineering and interiors. Gachibowli, Hyderabad, since 2018.</p>
+              <h2>Plot to home.</h2>
+              <p>Keep scrolling and watch a house go up, from an empty plot to the front door.</p>
             </div>
             <div class="film-step"><span class="num">01 / 04</span><div><h2>Site</h2><p>The plot is surveyed and the footprint marked out.</p></div></div>
             <div class="film-step"><span class="num">02 / 04</span><div><h2>Structure</h2><p>Foundations, columns, slabs and walls.</p></div></div>
@@ -198,6 +234,7 @@
     </section>
   </main>
 
+  <script src="js/hero.js" defer></script>
   <script src="js/flythrough.js" defer></script>
   <script src="js/site.js" defer></script>
 </body>
