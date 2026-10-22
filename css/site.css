@@ -572,3 +572,13 @@ a { color: inherit; }
 
 .site-footer a { text-decoration: none; background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size 0.5s var(--ease), color 0.3s var(--ease); }
 .site-footer a:hover { color: var(--bone); background-size: 100% 1px; }
+
+.site-footer a.social {
+  width: 40px; height: 40px; margin: 8px 0 0; border-radius: 999px;
+  border: 1px solid var(--hair-d); display: inline-grid; place-items: center;
+  color: var(--bone-2); background-image: none;
+  transition: background-color 0.4s var(--ease), color 0.4s var(--ease), border-color 0.4s var(--ease), transform 0.4s var(--ease);
+}
+.site-footer a.social svg { width: 18px; height: 18px; }
+.site-footer a.social:hover { background: var(--bone); color: var(--night); border-color: var(--bone); transform: translateY(-2px); }
+@media (min-width: 761px) { .site-footer a.social { margin: -10px 0; } }
