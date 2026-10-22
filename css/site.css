@@ -569,3 +569,6 @@ a { color: inherit; }
 }
 
 .film-hint { display: none; }
+
+.site-footer a { text-decoration: none; background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size 0.5s var(--ease), color 0.3s var(--ease); }
+.site-footer a:hover { color: var(--bone); background-size: 100% 1px; }
